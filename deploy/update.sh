@@ -41,7 +41,11 @@ log() { printf '%s %s\n' "$(date '+%F %T')" "$*" | tee -a "$LOG" >&2; }
 exec 9>"$STATE/lock"
 flock -n 9 || exit 0   # another run is in progress
 
-SITE="${SITE:-$(cat "$BENCH/sites/currentsite.txt" 2>/dev/null || true)}"
+if [ -z "${SITE:-}" ]; then
+	SITE=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1])).get("default_site", ""))' \
+		"$BENCH/sites/common_site_config.json" 2>/dev/null || true)
+	[ -n "$SITE" ] || SITE=$(cat "$BENCH/sites/currentsite.txt" 2>/dev/null || true)
+fi
 [ -n "$SITE" ] || { log "no site configured"; exit 1; }
 
 mode="${1:-}"
