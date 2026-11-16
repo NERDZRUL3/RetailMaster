@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router'
 import { ApiError } from '@/api'
 import { branding } from '@/branding'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 import { homePath, login } from '@/session'
 
 const { t } = useI18n()
@@ -34,7 +35,8 @@ async function submit() {
 <template>
   <div class="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-8">
     <div class="w-full max-w-sm">
-      <div class="mb-4 flex justify-end">
+      <div class="mb-4 flex justify-end gap-2">
+        <ThemeSwitcher />
         <LanguageSwitcher />
       </div>
 
@@ -45,7 +47,7 @@ async function submit() {
           :alt="branding.app_name"
           class="h-28 w-28 rounded-full bg-white object-contain shadow-sm ring-1 ring-slate-200"
         />
-        <p class="mt-3 text-xl font-semibold text-brand-700">
+        <p class="mt-3 text-xl font-semibold text-brand-ink">
           <bdi>{{ branding.app_name }}</bdi>
         </p>
       </div>
@@ -85,7 +87,7 @@ async function submit() {
         <button
           type="submit"
           :disabled="busy"
-          class="mt-5 w-full rounded-lg bg-brand-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+          class="mt-5 w-full rounded-lg bg-brand-600 px-4 py-2.5 text-base font-semibold text-on-brand hover:bg-brand-700 disabled:opacity-60"
         >
           {{ busy ? t('auth.signingIn') : t('auth.signIn') }}
         </button>

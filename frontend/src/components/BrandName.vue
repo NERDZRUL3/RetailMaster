@@ -8,7 +8,7 @@ withDefaults(defineProps<{ logoClass?: string; showName?: boolean }>(), {
 </script>
 
 <template>
-  <span class="inline-flex items-center gap-2.5 font-semibold text-brand-700">
+  <span class="inline-flex items-center gap-2.5 font-semibold text-brand-ink">
     <img v-if="branding.logo" :src="branding.logo" :alt="branding.app_name" :class="[logoClass, 'object-contain']" />
     <bdi v-if="showName || !branding.logo">{{ branding.app_name }}</bdi>
   </span>

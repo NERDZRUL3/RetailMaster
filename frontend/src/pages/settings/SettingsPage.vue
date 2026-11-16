@@ -202,7 +202,7 @@ async function removeLogo() {
               {{ t('settings.accent') }}
             </span>
             <span
-              class="rounded-lg px-4 py-2 text-sm font-semibold text-white"
+              class="rounded-lg px-4 py-2 text-sm font-semibold text-on-brand"
               :style="{ backgroundColor: strongPreview }"
             >
               {{ t('settings.button') }}
@@ -244,7 +244,7 @@ async function removeLogo() {
         <button
           type="submit"
           :disabled="!!busy"
-          class="rounded-lg bg-brand-600 px-5 py-2.5 text-base font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+          class="rounded-lg bg-brand-600 px-5 py-2.5 text-base font-semibold text-on-brand hover:bg-brand-700 disabled:opacity-60"
         >
           {{ busy === 'save' ? t('settings.saving') : t('settings.save') }}
         </button>

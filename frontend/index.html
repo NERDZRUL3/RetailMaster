@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Replaced at runtime by the site's Application Name (Retail Settings). -->
     <title>Retail</title>
+    <!-- Apply the saved light/dark choice before the first paint (no flash).
+         Same rule as src/theme.ts. -->
+    <script>
+      try {
+        var t = localStorage.getItem('retail.theme')
+        if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches))
+          document.documentElement.classList.add('dark')
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="app"></div>

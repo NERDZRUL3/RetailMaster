@@ -5,6 +5,12 @@
     "fr": "Français",
     "ar": "العربية"
   },
+  "theme": {
+    "label": "Theme",
+    "system": "Automatic (device setting)",
+    "light": "Light",
+    "dark": "Dark"
+  },
   "auth": {
     "title": "Sign in",
     "subtitle": "Use the account your shop owner gave you.",

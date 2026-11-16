@@ -19,6 +19,61 @@
   --color-brand-600: var(--brand-strong);
   --color-brand-700: color-mix(in srgb, var(--brand-strong) 85%, black);
   --color-brand-800: color-mix(in srgb, var(--brand-strong) 70%, black);
+  /* Brand-coloured text (links, titles, active menu entry). */
+  --color-brand-ink: color-mix(in srgb, var(--brand-strong) 80%, black);
+  /* Text on brand-filled buttons; stays white in both themes. */
+  --color-on-brand: #ffffff;
+}
+
+html {
+  color-scheme: light;
+  background-color: var(--color-slate-50);
+}
+
+/* Form fields without their own background use the card colour in both
+   themes (otherwise the browser's dark default is near-black). Utility
+   classes still override this. */
+@layer base {
+  input:not([type='checkbox']):not([type='radio']):not([type='color']),
+  select,
+  textarea {
+    background-color: var(--color-white);
+  }
+}
+
+/* Dark theme: theme.ts puts the `dark` class on <html>. Components keep
+   their light-theme class names; the neutral and status colours they use are
+   remapped here, so a page only needs `text-on-brand` and `text-brand-ink`
+   for the two brand cases. */
+:root.dark {
+  color-scheme: dark;
+
+  --color-white: #182131; /* cards, header, inputs */
+  --color-slate-50: #0e1521; /* page background */
+  --color-slate-100: #222d3f;
+  --color-slate-200: #2c3a50;
+  --color-slate-300: #3d4d66;
+  --color-slate-400: #7c8aa3;
+  --color-slate-500: #94a3b8;
+  --color-slate-600: #b4c0d2;
+  --color-slate-700: #cbd5e1;
+  --color-slate-800: #e2e8f0;
+  --color-slate-900: #f1f5f9;
+
+  --color-red-50: #3a1418;
+  --color-red-700: #fca5a5;
+  --color-red-800: #fecaca;
+  --color-amber-50: #33270d;
+  --color-amber-100: #45330e;
+  --color-amber-200: #6b4d12;
+  --color-amber-800: #fcd34d;
+  --color-amber-900: #fde68a;
+  --color-green-50: #0f2a1c;
+  --color-green-800: #86efac;
+
+  --color-brand-50: color-mix(in srgb, var(--brand) 22%, #182131);
+  --color-brand-100: color-mix(in srgb, var(--brand) 32%, #182131);
+  --color-brand-ink: color-mix(in srgb, var(--brand) 55%, white);
 }
 
 /* One visible focus style everywhere, for keyboard and scanner-driven use. */

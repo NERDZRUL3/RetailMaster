@@ -23,7 +23,7 @@ const shortNames: Record<Locale, string> = { en: 'EN', fr: 'FR', ar: 'ع' }
       :key="code"
       type="button"
       class="min-w-9 rounded-md px-2 py-1 text-sm font-medium"
-      :class="locale === code ? 'bg-brand-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
+      :class="locale === code ? 'bg-brand-600 text-on-brand' : 'text-slate-600 hover:bg-slate-100'"
       :aria-pressed="locale === code"
       :title="t(`language.${code}`)"
       @click="chooseLocale(code)"

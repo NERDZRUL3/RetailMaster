@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 
 import BrandName from '@/components/BrandName.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
 import { logout, session } from '@/session'
 
 const { t } = useI18n()
@@ -42,13 +43,14 @@ async function signOut() {
             :key="item.to"
             :to="item.to"
             class="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
-            active-class="bg-brand-50 text-brand-800"
+            active-class="bg-brand-50 text-brand-ink"
           >
             {{ item.label }}
           </RouterLink>
         </nav>
 
         <div class="ms-auto flex items-center gap-3">
+          <ThemeSwitcher />
           <LanguageSwitcher />
           <div v-if="session.context" class="hidden text-end leading-tight sm:block">
             <div class="text-sm font-medium" dir="auto">{{ session.context.full_name }}</div>

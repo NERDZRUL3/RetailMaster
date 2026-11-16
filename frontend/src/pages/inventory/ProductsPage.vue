@@ -72,7 +72,7 @@ onMounted(async () => {
       <RouterLink
         v-if="options?.can_create"
         to="/products/new"
-        class="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
+        class="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-on-brand hover:bg-brand-700"
       >
         {{ t('products.new') }}
       </RouterLink>

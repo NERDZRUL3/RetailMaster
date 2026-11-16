@@ -114,7 +114,7 @@ function stockFor(shop: string) {
 
 <template>
   <div class="mx-auto max-w-3xl">
-    <RouterLink to="/products" class="text-sm font-medium text-brand-700 hover:underline">
+    <RouterLink to="/products" class="text-sm font-medium text-brand-ink hover:underline">
       {{ t('products.back') }}
     </RouterLink>
     <h1 class="mt-2 text-2xl font-semibold text-slate-900" dir="auto">
@@ -237,7 +237,7 @@ function stockFor(shop: string) {
       </fieldset>
 
       <div v-if="!readOnly" class="flex justify-end">
-        <button type="submit" :disabled="saving" class="rounded-lg bg-brand-600 px-5 py-2.5 text-base font-semibold text-white hover:bg-brand-700 disabled:opacity-60">
+        <button type="submit" :disabled="saving" class="rounded-lg bg-brand-600 px-5 py-2.5 text-base font-semibold text-on-brand hover:bg-brand-700 disabled:opacity-60">
           {{ saving ? t('products.saving') : t('products.save') }}
         </button>
       </div>

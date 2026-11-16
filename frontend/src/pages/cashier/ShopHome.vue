@@ -27,7 +27,7 @@ const shops = computed(() => session.context?.shops ?? [])
       <button
         type="button"
         disabled
-        class="mt-6 w-full rounded-xl bg-brand-600 px-4 py-4 text-lg font-semibold text-white disabled:opacity-50"
+        class="mt-6 w-full rounded-xl bg-brand-600 px-4 py-4 text-lg font-semibold text-on-brand disabled:opacity-50"
       >
         {{ t('shop.openPos') }}
       </button>

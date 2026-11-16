@@ -5,6 +5,12 @@
     "fr": "Français",
     "ar": "العربية"
   },
+  "theme": {
+    "label": "Thème",
+    "system": "Automatique (réglage de l'appareil)",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
   "auth": {
     "title": "Connexion",
     "subtitle": "Utilisez le compte fourni par le propriétaire du magasin.",
