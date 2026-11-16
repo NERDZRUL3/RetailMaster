@@ -52,10 +52,9 @@ jobs:
             sed -i "s/^$key=.*/$key=$(openssl rand -hex 16)/" .env
           done
 
+      # `up` returns only after create-site completed successfully (depends_on).
       - name: Build image and create the site
-        run: |
-          $COMPOSE up -d --build db redis-cache redis-queue backend
-          $COMPOSE wait create-site
+        run: $COMPOSE up -d --build db redis-cache redis-queue backend
 
       - name: Run tests
         run: |
