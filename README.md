@@ -16,6 +16,8 @@ with a custom app (`retail_management`) and its own web interface.
 | `apps/retail_management/` | Custom Frappe app (DocTypes, APIs, tests) |
 | `frontend/` | Web interface (Vue 3, TypeScript, Tailwind), served at `/retail` |
 | `infrastructure/docker/` | Development stack (pinned ERPNext image + this app) |
+| `deploy/` | Production updater: installs commits that passed CI, with rollback |
+| `.github/workflows/` | CI: interface build and app tests on every push |
 | `docs/` | Installation, deployment, architecture, permissions |
 
 ## Getting started

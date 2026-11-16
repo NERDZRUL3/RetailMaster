@@ -1,0 +1,72 @@
+name: CI
+
+# Production servers only install a commit when every job here passed.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Interface (typecheck and build)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run build
+
+  backend:
+    name: App tests (ERPNext site in Docker)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: infrastructure/docker
+    env:
+      COMPOSE: docker compose -f compose.dev.yaml --env-file .env
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Throwaway environment file
+        run: |
+          cp .env.example .env
+          for key in DB_ROOT_PASSWORD ADMIN_PASSWORD DEMO_PASSWORD; do
+            sed -i "s/^$key=.*/$key=$(openssl rand -hex 16)/" .env
+          done
+
+      - name: Build image and create the site
+        run: |
+          $COMPOSE up -d --build backend
+          $COMPOSE wait create-site
+
+      - name: Run tests
+        run: |
+          site=$(grep '^SITE_NAME=' .env | cut -d= -f2)
+          $COMPOSE exec -T backend bench --site "$site" set-config allow_tests true
+          $COMPOSE exec -T backend bench --site "$site" run-tests --app retail_management
+
+      - name: Logs on failure
+        if: failure()
+        run: $COMPOSE logs --tail 200 create-site backend
+
+      - name: Stop
+        if: always()
+        run: $COMPOSE down -v

@@ -185,15 +185,38 @@ bench --site restoretest.local list-apps
 bench drop-site restoretest.local --force --no-backup --db-root-username root --db-root-password "$R"
 ```
 
-## Updating the app
+## Automatic updates
 
-Copy the new commit with `git archive` as in step 3, then:
+`deploy/update.sh` installs new commits from GitHub. Every 15 minutes it
+checks the branch and, for a new commit:
+
+1. waits until every GitHub CI check on that commit passed (a failed CI
+   means the commit is never installed);
+2. builds the interface on the server (nothing live is touched yet);
+3. backs up the database;
+4. copies the app, runs `bench migrate` and restarts;
+5. checks the site: ping, `/retail` page and its script, session API, all
+   processes running.
+
+If step 4 or 5 fails, it puts back the previous app and restores the
+database backup, then skips that commit until a newer one arrives.
+
+Install, as `deploy`:
 
 ```bash
-cd ~/src/frontend && npm ci && npm run build
-rsync -a --delete --exclude .git ~/src/apps/retail_management/ ~/frappe-bench/apps/retail_management/
-cd ~/frappe-bench
-bench --site all backup
-bench --site all migrate
-sudo supervisorctl restart all
+git clone https://github.com/<owner>/<repo>.git ~/src/repo
+install -m 700 ~/src/repo/deploy/update.sh ~/bin/retail-update.sh
+mkdir -p ~/.config && cp ~/src/repo/deploy/updater.env.example ~/.config/retail-updater.env
+# edit REPO (and DEPLOY_HOURS once shops use the system during the day)
+( crontab -l; echo "*/15 * * * * $HOME/bin/retail-update.sh" ) | crontab -
+```
+
+Cron runs a copy in `~/bin`, so an update never rewrites the running
+script. After a change to `deploy/update.sh`, copy it again with the
+`install` line above.
+
+```bash
+~/bin/retail-update.sh --status   # deployed and available commit, last log lines
+~/bin/retail-update.sh --now      # install now, ignoring DEPLOY_HOURS
+tail -f ~/updater/update.log
 ```
