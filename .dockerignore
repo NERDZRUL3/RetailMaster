@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+docs
+frontend/node_modules
+**/__pycache__
+**/*.egg-info
+*.md
+!apps/retail_management/README.md

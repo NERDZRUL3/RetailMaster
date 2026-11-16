@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+
+/* The customer's brand colours. branding.ts overwrites both from Retail
+   Settings; these values are only the fallback while the page loads. */
+:root {
+  --brand: #0f766e;
+  --brand-strong: #0f766e;
+}
+
+@theme {
+  --font-sans: 'Segoe UI', 'Noto Sans', 'Noto Sans Arabic', Tahoma, system-ui, sans-serif;
+
+  /* Exact brand colour: decorative accents only (rings, borders, bars). */
+  --color-brand: var(--brand);
+  /* Tint for selected and highlighted backgrounds. */
+  --color-brand-50: color-mix(in srgb, var(--brand) 10%, white);
+  --color-brand-100: color-mix(in srgb, var(--brand) 20%, white);
+  /* Readable shade: anything that carries white text, and brand-coloured text. */
+  --color-brand-600: var(--brand-strong);
+  --color-brand-700: color-mix(in srgb, var(--brand-strong) 85%, black);
+  --color-brand-800: color-mix(in srgb, var(--brand-strong) 70%, black);
+}
+
+/* One visible focus style everywhere, for keyboard and scanner-driven use. */
+:focus-visible {
+  outline: 2px solid var(--brand-strong);
+  outline-offset: 2px;
+}

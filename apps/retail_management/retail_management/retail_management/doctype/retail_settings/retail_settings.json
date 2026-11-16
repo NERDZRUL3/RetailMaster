@@ -1,0 +1,112 @@
+{
+ "actions": [],
+ "creation": "2026-11-16 22:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "branding_section",
+  "app_name",
+  "logo",
+  "column_break_branding",
+  "brand_color",
+  "languages_section",
+  "default_language",
+  "column_break_languages",
+  "enable_en",
+  "enable_fr",
+  "enable_ar"
+ ],
+ "fields": [
+  {
+   "fieldname": "branding_section",
+   "fieldtype": "Section Break",
+   "label": "Branding"
+  },
+  {
+   "description": "Shown in the header, on the login page and as the browser tab title.",
+   "fieldname": "app_name",
+   "fieldtype": "Data",
+   "label": "Application Name"
+  },
+  {
+   "description": "Upload as a public file so it can be shown on the login page.",
+   "fieldname": "logo",
+   "fieldtype": "Attach Image",
+   "label": "Logo"
+  },
+  {
+   "fieldname": "column_break_branding",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Used for buttons and highlights. Must be dark enough for white text.",
+   "fieldname": "brand_color",
+   "fieldtype": "Color",
+   "label": "Brand Colour"
+  },
+  {
+   "fieldname": "languages_section",
+   "fieldtype": "Section Break",
+   "label": "Languages"
+  },
+  {
+   "default": "en",
+   "fieldname": "default_language",
+   "fieldtype": "Select",
+   "label": "Default Language",
+   "options": "en\nfr\nar",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_languages",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_en",
+   "fieldtype": "Check",
+   "label": "English"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_fr",
+   "fieldtype": "Check",
+   "label": "French"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_ar",
+   "fieldtype": "Check",
+   "label": "Arabic"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-11-16 22:00:00",
+ "modified_by": "Administrator",
+ "module": "Retail Management",
+ "name": "Retail Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Retail Owner",
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

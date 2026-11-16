@@ -1,0 +1,101 @@
+#!/bin/sh
+# Blocks a push that would publish sensitive data. The repository is public.
+#
+# Enable once per clone:   git config core.hooksPath .githooks
+#
+# Checks only what is being pushed (new commits):
+#   - file names: .env files, keys, certificates, database dumps, backups
+#   - added lines: private keys, API tokens, passwords from the local
+#     infrastructure/docker/.env, e-mail addresses other than placeholder
+#     and no-reply ones, private network addresses
+#   - commit author and committer e-mails: must be no-reply addresses
+#   - commit messages: no co-author lines, no blocklisted words
+#   - words listed one per line in .git/info/push-blocklist (local only,
+#     never pushed): personal names, business names, private hostnames
+#
+# A finding stops the push and prints where it is. Remove the data from the
+# commits (amend or rebase) before pushing again.
+
+set -u
+zero=0000000000000000000000000000000000000000
+root=$(git rev-parse --show-toplevel)
+fail=0
+
+report() {
+	echo "pre-push: $1" >&2
+	fail=1
+}
+
+# Exact values to never publish: passwords from the local .env, plus the
+# private blocklist. Kept in a temporary file, never printed.
+values=$(mktemp)
+trap 'rm -f "$values"' EXIT
+if [ -f "$root/infrastructure/docker/.env" ]; then
+	grep -E '^[A-Z_]*(PASSWORD|SECRET|TOKEN|KEY)[A-Z_]*=' "$root/infrastructure/docker/.env" \
+		| cut -d= -f2- | tr -d '"'"'" | grep -E '.{6,}' >> "$values"
+fi
+if [ -f "$root/.git/info/push-blocklist" ]; then
+	grep -v -E '^[[:space:]]*(#|$)' "$root/.git/info/push-blocklist" >> "$values"
+fi
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+	[ "$local_sha" = "$zero" ] && continue   # deleting a branch
+	if [ "$remote_sha" = "$zero" ]; then
+		commits=$(git rev-list "$local_sha" --not --remotes | tr '\n' ' ')
+		[ -z "$commits" ] && continue
+		log_args="--no-walk $commits"
+	else
+		commits=$(git rev-list "$remote_sha..$local_sha" | tr '\n' ' ')
+		[ -z "$commits" ] && continue
+		log_args="$remote_sha..$local_sha"
+	fi
+
+	# Commit identities
+	bad_ids=$(git log --format='%ae%n%ce' $log_args | sort -u \
+		| grep -v -E '@users\.noreply\.github\.com$')
+	[ -n "$bad_ids" ] && report "commit author/committer e-mail is not a no-reply address: $bad_ids"
+
+	# Commit messages: no co-author lines, no blocklisted words
+	messages=$(git log --format='%h %B' $log_args)
+	bad_msgs=$(printf '%s\n' "$messages" | grep -i -E 'co-authored-by|generated with' | head -5)
+	if [ -s "$values" ]; then
+		bad_msgs="$bad_msgs$(printf '%s\n' "$messages" | grep -i -F -f "$values" | head -5)"
+	fi
+	[ -n "$bad_msgs" ] && report "commit message has a co-author line or a blocklisted word:
+$bad_msgs"
+
+	# File names
+	bad_files=$(git log --name-only --diff-filter=AMR --format= $log_args | sort -u | grep -E \
+		'(^|/)\.env($|\.)|\.pem$|\.key$|\.p12$|\.pfx$|(^|/)id_(rsa|ed25519|ecdsa)|\.sql(\.gz)?$|\.tar(\.gz)?$|(^|/)secrets?/|(^|/)backups?/|site_config\.json$' \
+		| grep -v -E '\.env\.example$')
+	[ -n "$bad_files" ] && report "sensitive file name(s): $(echo $bad_files)"
+
+	# Added lines, each prefixed with its file
+	added=$(git log -p --format= --no-color --unified=0 $log_args | awk '
+		/^\+\+\+ b\// { file = substr($0, 7); next }
+		/^\+/ && !/^\+\+\+/ { print file ": " substr($0, 2) }')
+
+	check() {   # check <description> <extended regex>
+		hits=$(printf '%s\n' "$added" | grep -E -- "$2" | cut -c1-160 | head -5)
+		[ -n "$hits" ] && report "$1:
+$hits"
+	}
+	check "private key" '-----BEGIN [A-Z ]*PRIVATE KEY-----'
+	check "API token" 'ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-(ant-)?[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|xox[abpr]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{30,}'
+	check "private network address" '(^|[^0-9.])(10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}|172\.(1[6-9]|2[0-9]|3[01])\.[0-9]{1,3}\.[0-9]{1,3})([^0-9]|$)'
+
+	emails=$(printf '%s\n' "$added" | grep -o -E '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' | sort -u \
+		| grep -v -E '@example\.(com|org|net)$|@users\.noreply\.github\.com$|\.(localhost|test|invalid|local)$')
+	[ -n "$emails" ] && report "e-mail address(es) other than placeholders: $(echo $emails)"
+
+	if [ -s "$values" ]; then
+		matched=$(printf '%s\n' "$added" | grep -F -i -f "$values" | cut -d: -f1 | sort -u)
+		[ -n "$matched" ] && report "a local password or blocklisted word appears in: $(echo $matched)"
+	fi
+done
+
+if [ "$fail" -ne 0 ]; then
+	echo "pre-push: push stopped. Nothing was sent." >&2
+	exit 1
+fi
+exit 0

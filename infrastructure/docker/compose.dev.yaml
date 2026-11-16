@@ -1,0 +1,148 @@
+# Development stack. Modelled on frappe_docker's pwd.yml, with pinned images.
+# Run from this directory:  docker compose -f compose.dev.yaml --env-file .env up -d --build
+# The web port is bound to 127.0.0.1 only. MariaDB and Redis are not published.
+name: nerdoz-retail-dev
+
+x-app: &app
+  image: nerdoz-retail:dev
+  build:
+    context: ../..
+    dockerfile: infrastructure/docker/Dockerfile
+    args:
+      ERPNEXT_VERSION: ${ERPNEXT_VERSION:-v16.55.0}
+  restart: unless-stopped
+  volumes:
+    - sites:/home/frappe/frappe-bench/sites
+    - logs:/home/frappe/frappe-bench/logs
+    # Live app source, so code changes need no image rebuild. After a change:
+    # `bench --site <site> migrate` for DocTypes, restart backend for Python.
+    - ../../apps/retail_management:/home/frappe/frappe-bench/apps/retail_management
+
+services:
+  db:
+    image: mariadb:11.8
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env}
+      MARIADB_AUTO_UPGRADE: "1"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 20
+      start_period: 10s
+    volumes:
+      - db-data:/var/lib/mysql
+
+  redis-cache:
+    image: redis:6.2-alpine
+    restart: unless-stopped
+
+  redis-queue:
+    image: redis:6.2-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-queue-data:/data
+
+  configurator:
+    <<: *app
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        ls -1 apps > sites/apps.txt;
+        bench set-config -g db_host db;
+        bench set-config -gp db_port 3306;
+        bench set-config -g redis_cache "redis://redis-cache:6379";
+        bench set-config -g redis_queue "redis://redis-queue:6379";
+        bench set-config -g redis_socketio "redis://redis-queue:6379";
+        bench set-config -gp socketio_port 9000;
+
+  create-site:
+    <<: *app
+    restart: "no"
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+    environment:
+      SITE_NAME: ${SITE_NAME:-retail.localhost}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        set -e
+        wait-for-it -t 120 db:3306
+        wait-for-it -t 120 redis-cache:6379
+        wait-for-it -t 120 redis-queue:6379
+        if [ -d "sites/$$SITE_NAME" ]; then
+          echo "Site $$SITE_NAME exists; running migrate"
+          bench --site "$$SITE_NAME" migrate
+        else
+          bench new-site "$$SITE_NAME" \
+            --mariadb-user-host-login-scope='%' \
+            --db-root-username=root \
+            --db-root-password="$$DB_ROOT_PASSWORD" \
+            --admin-password="$$ADMIN_PASSWORD" \
+            --install-app erpnext \
+            --install-app retail_management \
+            --set-default
+        fi
+
+  backend:
+    <<: *app
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+
+  websocket:
+    <<: *app
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+    command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
+
+  queue:
+    <<: *app
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+    command: ["bench", "worker", "--queue", "long,default,short"]
+
+  scheduler:
+    <<: *app
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+    command: ["bench", "schedule"]
+
+  frontend:
+    <<: *app
+    depends_on:
+      - backend
+      - websocket
+    command: ["nginx-entrypoint.sh"]
+    environment:
+      BACKEND: backend:8000
+      SOCKETIO: websocket:9000
+      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME:-retail.localhost}
+      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      PROXY_READ_TIMEOUT: "120"
+      CLIENT_MAX_BODY_SIZE: 50m
+    ports:
+      - "127.0.0.1:${HTTP_PORT:-8080}:8080"
+
+volumes:
+  db-data:
+  redis-queue-data:
+  sites:
+  logs:

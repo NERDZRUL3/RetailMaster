@@ -1,0 +1,74 @@
+import { createRouter, createWebHistory } from 'vue-router'
+
+import { type Home, homePath, loadSession, session } from './session'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    /** Page is for signed-out visitors. */
+    guest?: boolean
+    /** Which kinds of user may open the page. Navigation only: data is protected on the server. */
+    homes?: Home[]
+    /** Only for users who may edit the site's settings. */
+    settings?: boolean
+  }
+}
+
+export const router = createRouter({
+  history: createWebHistory('/retail/'),
+  routes: [
+    { path: '/login', component: () => import('./pages/LoginPage.vue'), meta: { guest: true } },
+    { path: '/no-access', component: () => import('./pages/NoAccessPage.vue') },
+    {
+      path: '/',
+      component: () => import('./layouts/AppLayout.vue'),
+      children: [
+        { path: '', redirect: () => homePath(session.context?.home) },
+        {
+          path: 'owner',
+          component: () => import('./pages/owner/OwnerDashboard.vue'),
+          meta: { homes: ['owner'] },
+        },
+        {
+          path: 'shop',
+          component: () => import('./pages/cashier/ShopHome.vue'),
+          meta: { homes: ['manager', 'cashier'] },
+        },
+        {
+          path: 'products',
+          component: () => import('./pages/inventory/ProductsPage.vue'),
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'products/new',
+          component: () => import('./pages/inventory/ProductEditor.vue'),
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'products/:code',
+          component: () => import('./pages/inventory/ProductEditor.vue'),
+          props: true,
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'settings',
+          component: () => import('./pages/settings/SettingsPage.vue'),
+          meta: { settings: true },
+        },
+      ],
+    },
+    { path: '/:pathMatch(.*)*', redirect: '/' },
+  ],
+})
+
+router.beforeEach(async (to) => {
+  if (!session.loaded) await loadSession()
+  const context = session.context
+
+  if (!context) return to.meta.guest ? true : '/login'
+  if (to.meta.guest) return homePath(context.home)
+  if (!context.home) return to.path === '/no-access' ? true : '/no-access'
+  if (to.meta.homes && !to.meta.homes.includes(context.home)) return homePath(context.home)
+  if (to.meta.settings && !context.can_edit_settings) return homePath(context.home)
+  if (to.path === '/no-access') return homePath(context.home)
+  return true
+})

@@ -1,0 +1,122 @@
+{
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "Use the account your shop owner gave you.",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "signOut": "Sign out",
+    "wrongCredentials": "Wrong email or password.",
+    "serverError": "Could not reach the server. Try again."
+  },
+  "roles": {
+    "owner": "Owner",
+    "manager": "Shop manager",
+    "cashier": "Cashier"
+  },
+  "nav": {
+    "main": "Main menu",
+    "overview": "Overview",
+    "myShop": "My shop",
+    "settings": "Settings",
+    "products": "Products"
+  },
+  "common": {
+    "notConnected": "Not connected yet",
+    "company": "Company"
+  },
+  "owner": {
+    "title": "Business overview",
+    "subtitle": "All your shops at a glance.",
+    "previewNote": "Sales, cash and stock figures appear here once the point of sale and inventory are connected.",
+    "salesToday": "Sales today",
+    "cashRegisters": "Cash registers",
+    "lowStock": "Low stock items",
+    "invoicesToVerify": "Invoices to verify",
+    "shops": "Shops",
+    "noShops": "No shops have been set up yet."
+  },
+  "shop": {
+    "greeting": "Hello, {name}",
+    "yourShop": "Your shop",
+    "yourShops": "Your shops",
+    "noShop": "No shop is assigned to your account. Ask the owner to give you access.",
+    "openPos": "Open point of sale",
+    "posSoon": "The point of sale is not available yet."
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "How the app looks for everyone in your business.",
+    "branding": "Branding",
+    "appName": "Application name",
+    "appNameHint": "Shown in the header, on the sign-in page and in the browser tab.",
+    "logo": "Logo",
+    "logoHint": "PNG, JPEG or WebP, up to 2 MB. Square logos look best.",
+    "uploadLogo": "Upload logo",
+    "replaceLogo": "Replace logo",
+    "removeLogo": "Remove",
+    "noLogo": "No logo",
+    "uploading": "Uploading…",
+    "color": "Brand colour",
+    "colorHint": "Used exactly as chosen for accents. Buttons use a darker shade of it when needed, so their text stays readable.",
+    "preview": "Preview",
+    "accent": "Accent",
+    "button": "Button",
+    "languages": "Languages",
+    "languagesHint": "The languages people can choose from.",
+    "defaultLanguage": "Default language",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved.",
+    "error": "Could not save: {message}"
+  },
+  "noAccess": {
+    "title": "No access",
+    "body": "Your account is not set up for the shop system. Ask the owner to give you a role."
+  },
+  "products": {
+    "title": "Products",
+    "subtitle": "Your catalogue and stock in each shop.",
+    "new": "New product",
+    "back": "← All products",
+    "searchPlaceholder": "Scan a barcode or search by name or code",
+    "shop": "Shop",
+    "allShops": "All my shops",
+    "lowOnly": "Low stock only",
+    "noMatch": "No product matches.",
+    "empty": "No products yet.",
+    "inactive": "Inactive",
+    "low": "Low stock",
+    "details": "Details",
+    "name": "Product name",
+    "code": "Product code",
+    "codeAuto": "Leave empty to use the first barcode",
+    "price": "Selling price",
+    "category": "Category",
+    "unit": "Unit",
+    "brand": "Brand",
+    "description": "Description",
+    "inactiveLabel": "Inactive (hidden from sale)",
+    "barcodes": "Barcodes",
+    "barcodesHint": "Scan with the barcode reader or type it, then press Enter. A barcode can belong to one product only.",
+    "scanOrType": "Scan or type a barcode",
+    "add": "Add",
+    "removeBarcode": "Remove barcode {code}",
+    "stockAndReorder": "Stock and reorder",
+    "reorderHint": "A product is marked as low stock when a shop’s stock falls to its reorder level. Leave empty for none.",
+    "inStock": "In stock",
+    "reorderLevel": "Reorder at",
+    "reorderQty": "Order quantity",
+    "stockNote": "Stock quantities change only through receiving, sales, transfers and stock counts.",
+    "save": "Save product",
+    "saving": "Saving…",
+    "saved": "Saved."
+  }
+}

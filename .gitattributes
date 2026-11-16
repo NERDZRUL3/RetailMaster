@@ -1,0 +1,6 @@
+# The app runs in Linux containers with this folder mounted in, so keep LF
+# line endings on Windows checkouts too.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

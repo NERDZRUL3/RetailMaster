@@ -1,0 +1,122 @@
+{
+  "language": {
+    "label": "Langue",
+    "en": "English",
+    "fr": "Français",
+    "ar": "العربية"
+  },
+  "auth": {
+    "title": "Connexion",
+    "subtitle": "Utilisez le compte fourni par le propriétaire du magasin.",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion…",
+    "signOut": "Se déconnecter",
+    "wrongCredentials": "E-mail ou mot de passe incorrect.",
+    "serverError": "Impossible de joindre le serveur. Réessayez."
+  },
+  "roles": {
+    "owner": "Propriétaire",
+    "manager": "Responsable de magasin",
+    "cashier": "Caissier"
+  },
+  "nav": {
+    "main": "Menu principal",
+    "overview": "Vue d'ensemble",
+    "myShop": "Mon magasin",
+    "settings": "Paramètres",
+    "products": "Produits"
+  },
+  "common": {
+    "notConnected": "Pas encore connecté",
+    "company": "Société"
+  },
+  "owner": {
+    "title": "Vue d'ensemble de l'activité",
+    "subtitle": "Tous vos magasins en un coup d'œil.",
+    "previewNote": "Les chiffres de ventes, de caisse et de stock s'afficheront ici une fois la caisse et l'inventaire connectés.",
+    "salesToday": "Ventes du jour",
+    "cashRegisters": "Caisses",
+    "lowStock": "Articles en stock faible",
+    "invoicesToVerify": "Factures à vérifier",
+    "shops": "Magasins",
+    "noShops": "Aucun magasin n'a encore été configuré."
+  },
+  "shop": {
+    "greeting": "Bonjour, {name}",
+    "yourShop": "Votre magasin",
+    "yourShops": "Vos magasins",
+    "noShop": "Aucun magasin n'est attribué à votre compte. Demandez l'accès au propriétaire.",
+    "openPos": "Ouvrir la caisse",
+    "posSoon": "La caisse n'est pas encore disponible."
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "L'apparence de l'application pour toute votre entreprise.",
+    "branding": "Identité visuelle",
+    "appName": "Nom de l'application",
+    "appNameHint": "Affiché dans l'en-tête, sur la page de connexion et dans l'onglet du navigateur.",
+    "logo": "Logo",
+    "logoHint": "PNG, JPEG ou WebP, 2 Mo maximum. Un logo carré donne le meilleur résultat.",
+    "uploadLogo": "Importer un logo",
+    "replaceLogo": "Remplacer le logo",
+    "removeLogo": "Supprimer",
+    "noLogo": "Aucun logo",
+    "uploading": "Envoi…",
+    "color": "Couleur de la marque",
+    "colorHint": "Utilisée telle quelle pour les accents. Les boutons utilisent une teinte plus foncée si nécessaire, pour que leur texte reste lisible.",
+    "preview": "Aperçu",
+    "accent": "Accent",
+    "button": "Bouton",
+    "languages": "Langues",
+    "languagesHint": "Les langues proposées aux utilisateurs.",
+    "defaultLanguage": "Langue par défaut",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saved": "Enregistré.",
+    "error": "Échec de l'enregistrement : {message}"
+  },
+  "noAccess": {
+    "title": "Accès refusé",
+    "body": "Votre compte n'est pas configuré pour le système du magasin. Demandez un rôle au propriétaire."
+  },
+  "products": {
+    "title": "Produits",
+    "subtitle": "Votre catalogue et le stock de chaque magasin.",
+    "new": "Nouveau produit",
+    "back": "← Tous les produits",
+    "searchPlaceholder": "Scannez un code-barres ou cherchez par nom ou code",
+    "shop": "Magasin",
+    "allShops": "Tous mes magasins",
+    "lowOnly": "Stock faible uniquement",
+    "noMatch": "Aucun produit ne correspond.",
+    "empty": "Aucun produit pour le moment.",
+    "inactive": "Inactif",
+    "low": "Stock faible",
+    "details": "Détails",
+    "name": "Nom du produit",
+    "code": "Code produit",
+    "codeAuto": "Laisser vide pour utiliser le premier code-barres",
+    "price": "Prix de vente",
+    "category": "Catégorie",
+    "unit": "Unité",
+    "brand": "Marque",
+    "description": "Description",
+    "inactiveLabel": "Inactif (non vendu)",
+    "barcodes": "Codes-barres",
+    "barcodesHint": "Scannez avec le lecteur ou tapez le code, puis appuyez sur Entrée. Un code-barres ne peut appartenir qu’à un seul produit.",
+    "scanOrType": "Scannez ou tapez un code-barres",
+    "add": "Ajouter",
+    "removeBarcode": "Retirer le code-barres {code}",
+    "stockAndReorder": "Stock et réapprovisionnement",
+    "reorderHint": "Un produit est signalé en stock faible quand le stock d’un magasin descend au seuil. Laisser vide pour aucun seuil.",
+    "inStock": "En stock",
+    "reorderLevel": "Seuil",
+    "reorderQty": "Quantité à commander",
+    "stockNote": "Les quantités en stock ne changent que par les réceptions, ventes, transferts et inventaires.",
+    "save": "Enregistrer le produit",
+    "saving": "Enregistrement…",
+    "saved": "Enregistré."
+  }
+}

@@ -1,0 +1,48 @@
+# Secrets and local config
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+build/
+.ruff_cache/
+.pytest_cache/
+
+# Node
+node_modules/
+frontend/dist/
+
+# Built interface (output of `npm run build` in frontend/)
+apps/retail_management/retail_management/public/frontend/
+apps/retail_management/retail_management/www/retail.html
+
+# Frappe / runtime data (never commit sites, backups or invoice files)
+sites/
+logs/
+*.sql
+*.sql.gz
+private/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Never publish (also enforced by .githooks/pre-push)
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+secrets/
+backups/
+*.tar
+*.tar.gz
+site_config.json
