@@ -48,7 +48,7 @@ jobs:
       - name: Throwaway environment file
         run: |
           cp .env.example .env
-          for key in DB_ROOT_PASSWORD ADMIN_PASSWORD DEMO_PASSWORD; do
+          for key in $(grep -o "^[A-Z_]*PASSWORD" .env); do
             sed -i "s/^$key=.*/$key=$(openssl rand -hex 16)/" .env
           done
 

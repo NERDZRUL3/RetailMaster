@@ -57,15 +57,24 @@ npm run build      # then Frappe serves it at http://localhost:8080/retail
 
 ## Demo shops and users
 
-Set `DEMO_PASSWORD` in `infrastructure/docker/.env`, then:
+Each role tier has its own password in `infrastructure/docker/.env`:
+
+| Account | Password key |
+|---|---|
+| `demo.owner@example.com` | `DEMO_OWNER_PASSWORD` |
+| `demo.partner@example.com` | `DEMO_PARTNER_PASSWORD` |
+| `demo.manager1@example.com` (Demo Shop 1) | `DEMO_MANAGER_PASSWORD` |
+| `demo.cashier1@example.com` (Demo Shop 1), `demo.cashier2@example.com` (Demo Shop 2) | `DEMO_CASHIER_PASSWORD` |
+
+Then:
 
 ```bash
-docker compose -f compose.dev.yaml exec backend bench --site retail.localhost execute retail_management.dev.seed_demo --kwargs '{"password": "<DEMO_PASSWORD>"}'
+./seed-demo.sh
 ```
 
-This creates two demo shops and the users `demo.owner`, `demo.partner`,
-`demo.manager1`, `demo.cashier1` and `demo.cashier2` (all `@example.com`).
-It needs a company, which exists once the tests have run once.
+This creates two demo shops, the users above and three demo products. Run
+it again after changing a password in `.env`. It needs a company, which
+exists once the tests have run once.
 
 ## Reset
 

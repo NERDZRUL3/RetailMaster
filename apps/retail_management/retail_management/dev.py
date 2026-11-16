@@ -8,25 +8,52 @@ from retail_management.setup import ROLE_CASHIER, ROLE_MANAGER, ROLE_OWNER, ROLE
 DEMO_BUSINESS = "Demo Business"
 DEMO_SHOPS = ("Demo Shop 1", "Demo Shop 2")
 
-# email, first name, role, assigned shop (None = all shops through the role)
+# Password tiers, one per role. Both demo cashiers share the cashier password.
+TIERS = ("owner", "partner", "manager", "cashier")
+
+# email, first name, role, password tier, assigned shop (None = all shops through the role)
 DEMO_USERS = (
-	("demo.owner@example.com", "Demo Owner", ROLE_OWNER, None),
-	("demo.partner@example.com", "Demo Partner", ROLE_PARTNER, None),
-	("demo.manager1@example.com", "Demo Manager 1", ROLE_MANAGER, DEMO_SHOPS[0]),
-	("demo.cashier1@example.com", "Demo Cashier 1", ROLE_CASHIER, DEMO_SHOPS[0]),
-	("demo.cashier2@example.com", "Demo Cashier 2", ROLE_CASHIER, DEMO_SHOPS[1]),
+	("demo.owner@example.com", "Demo Owner", ROLE_OWNER, "owner", None),
+	("demo.partner@example.com", "Demo Partner", ROLE_PARTNER, "partner", None),
+	("demo.manager1@example.com", "Demo Manager 1", ROLE_MANAGER, "manager", DEMO_SHOPS[0]),
+	("demo.cashier1@example.com", "Demo Cashier 1", ROLE_CASHIER, "cashier", DEMO_SHOPS[0]),
+	("demo.cashier2@example.com", "Demo Cashier 2", ROLE_CASHIER, "cashier", DEMO_SHOPS[1]),
 )
 
 
-def seed_demo(password: str):
+def _tier_passwords(passwords, password) -> dict[str, str]:
+	"""One password per tier: from `passwords` ({"owner": ..., ...}), else the
+	single `password` for every tier."""
+	if passwords:
+		result = frappe.parse_json(passwords)
+	elif password:
+		result = {tier: password for tier in TIERS}
+	else:
+		frappe.throw("Give passwords for the tiers: " + ", ".join(TIERS))
+	missing = [tier for tier in TIERS if not result.get(tier)]
+	if missing:
+		frappe.throw("Missing demo password for: " + ", ".join(missing))
+	short = [tier for tier in TIERS if len(result[tier]) < 8]
+	if short:
+		frappe.throw("Demo passwords must be at least 8 characters: " + ", ".join(short))
+	return result
+
+
+def seed_demo(passwords: dict | str | None = None, password: str | None = None):
 	"""Create synthetic shops and users for trying the interface locally.
 
-	bench --site <site> execute retail_management.dev.seed_demo --kwargs '{"password": "..."}'
+	Use infrastructure/docker/seed-demo.sh, which reads the per-tier passwords
+	from .env. Directly:
 
-	Safe to run repeatedly. Refuses to run unless the site allows tests.
+	bench --site <site> execute retail_management.dev.seed_demo \
+		--kwargs '{"passwords": {"owner": "...", "partner": "...", "manager": "...", "cashier": "..."}}'
+
+	Safe to run repeatedly; resets the demo users' passwords. Refuses to run
+	unless the site allows tests.
 	"""
 	if not frappe.conf.allow_tests:
 		frappe.throw("seed_demo only runs on a site with allow_tests enabled.")
+	tier_passwords = _tier_passwords(passwords, password)
 
 	ensure_roles()
 	company = frappe.db.get_value("Company", {}, "name")
@@ -47,13 +74,13 @@ def seed_demo(password: str):
 				}
 			).insert()
 
-	for email, first_name, role, shop in DEMO_USERS:
+	for email, first_name, role, tier, shop in DEMO_USERS:
 		if not frappe.db.exists("User", email):
 			frappe.get_doc(
 				{"doctype": "User", "email": email, "first_name": first_name, "send_welcome_email": 0}
 			).insert()
 		frappe.get_doc("User", email).add_roles(role)
-		update_password(email, password)
+		update_password(email, tier_passwords[tier])
 
 		if shop and not frappe.db.exists("Retail Shop Access", {"user": email, "retail_shop": shop}):
 			frappe.get_doc({"doctype": "Retail Shop Access", "user": email, "retail_shop": shop}).insert()
