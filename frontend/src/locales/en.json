@@ -154,7 +154,12 @@
     "stockNote": "Stock quantities change only through receiving, sales, transfers and stock counts.",
     "save": "Save product",
     "saving": "Saving…",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "group": "Group",
+    "subgroup": "Subgroup",
+    "noSubgroup": "— None —",
+    "noSubgroups": "No subgroups in this group",
+    "manageGroups": "Edit groups"
   },
   "overview": {
     "title": "Overview",
@@ -287,5 +292,24 @@
     "done": "Received {units} units into {shop} ({name}).",
     "history": "Recent deliveries",
     "noHistory": "No deliveries received yet."
+  },
+  "categories": {
+    "title": "Groups and subgroups",
+    "done": "Done",
+    "hint": "Shared by all shops. Renaming moves its products along; only empty ones can be deleted.",
+    "products": "{count} product | {count} products",
+    "addSubgroup": "Subgroup",
+    "addGroup": "New group",
+    "rename": "Rename",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "add": "Add",
+    "newName": "New name",
+    "groupName": "Group name",
+    "subgroupName": "Subgroup name",
+    "moveTo": "Move {name} to another group",
+    "confirmDelete": "Delete {name}?",
+    "pageHint": "Groups and subgroups for your products, shared by all shops."
   }
 }

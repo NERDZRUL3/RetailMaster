@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api'
+import { categoriesApi, type CategoryTree, locate } from '@/categories'
+import CategoryManager from '@/components/CategoryManager.vue'
 import { type FormOptions, formatQty, inventoryApi, type Product } from '@/inventory'
 
 const props = defineProps<{ code?: string }>()
@@ -21,6 +23,28 @@ const saving = ref(false)
 const message = ref<{ kind: 'ok' | 'error'; text: string } | null>(null)
 const newBarcode = ref('')
 
+// Category = group, or a subgroup of it. form.item_group follows the pickers.
+const tree = ref<CategoryTree | null>(null)
+const group = ref('')
+const subgroup = ref('')
+const managing = ref(false)
+const subgroups = computed(() => tree.value?.groups.find((g) => g.name === group.value)?.children ?? [])
+const canManage = computed(() => !!tree.value && (tree.value.can_create || tree.value.can_write))
+
+function pick(category: string) {
+  const found = locate(tree.value, category)
+  group.value = found.group
+  subgroup.value = found.subgroup
+}
+async function loadTree() {
+  tree.value = await categoriesApi.get()
+}
+async function onCategoriesChanged(renamed?: { from: string; to: string }) {
+  const current = form.item_group === renamed?.from ? renamed.to : form.item_group
+  await loadTree()
+  pick(current)
+}
+
 const form = reactive({
   item_code: '',
   item_name: '',
@@ -34,6 +58,13 @@ const form = reactive({
   reorder: {} as Record<string, { level: string | number; qty: string | number }>,
 })
 
+watch([group, subgroup], () => {
+  if (group.value) form.item_group = subgroup.value || group.value
+})
+watch(group, () => {
+  if (!subgroups.value.some((c) => c.name === subgroup.value)) subgroup.value = ''
+})
+
 const readOnly = computed(() => (isNew.value ? !options.value?.can_create : !options.value?.can_write))
 
 function fill(p: Product) {
@@ -41,6 +72,7 @@ function fill(p: Product) {
   form.item_code = p.item_code
   form.item_name = p.item_name
   form.item_group = p.item_group
+  pick(p.item_group)
   form.stock_uom = p.stock_uom
   form.brand = p.brand ?? ''
   form.description = p.description ?? ''
@@ -56,10 +88,12 @@ onMounted(async () => {
   try {
     options.value = await inventoryApi.options()
     for (const shop of options.value.shops) form.reorder[shop.name] = { level: '', qty: '' }
+    await loadTree()
     if (props.code) {
       fill(await inventoryApi.get(props.code))
     } else {
       form.item_group = options.value.default_item_group ?? ''
+      pick(form.item_group)
       form.stock_uom = options.value.default_uom
       if (typeof route.query.barcode === 'string' && route.query.barcode) form.barcodes = [route.query.barcode]
     }
@@ -165,10 +199,31 @@ function stockFor(shop: string) {
               <input id="p-price" v-model="form.price" type="number" min="0" step="0.01" dir="ltr" class="field tabular-nums" />
             </div>
             <div>
-              <label class="label" for="p-group">{{ t('products.category') }}</label>
-              <select id="p-group" v-model="form.item_group" class="field">
-                <option v-for="g in options.item_groups" :key="g" :value="g">{{ g }}</option>
+              <div class="flex items-center justify-between gap-2">
+                <label class="label" for="p-group">{{ t('products.group') }}</label>
+                <button
+                  v-if="canManage"
+                  type="button"
+                  class="mb-1.5 text-[13px] font-medium text-brand-ink hover:underline"
+                  :aria-expanded="managing"
+                  @click="managing = !managing"
+                >
+                  {{ t('products.manageGroups') }}
+                </button>
+              </div>
+              <select id="p-group" v-model="group" class="field">
+                <option v-for="g in tree?.groups ?? []" :key="g.name" :value="g.name">{{ g.name }}</option>
               </select>
+            </div>
+            <div>
+              <label class="label" for="p-subgroup">{{ t('products.subgroup') }}</label>
+              <select id="p-subgroup" v-model="subgroup" class="field" :disabled="!subgroups.length">
+                <option value="">{{ subgroups.length ? t('products.noSubgroup') : t('products.noSubgroups') }}</option>
+                <option v-for="c in subgroups" :key="c.name" :value="c.name">{{ c.name }}</option>
+              </select>
+            </div>
+            <div v-if="managing && tree" class="sm:col-span-2">
+              <CategoryManager :tree="tree" @changed="onCategoriesChanged" @close="managing = false" />
             </div>
             <div>
               <label class="label" for="p-uom">{{ t('products.unit') }}</label>

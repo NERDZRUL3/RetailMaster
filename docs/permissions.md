@@ -85,6 +85,11 @@ creates. It only adds rights, never removes them.
 | Sales Invoice | read | read (own shops: the invoice's warehouse is scoped by User Permissions) |
 | Stock Entry | Owner: read, write, create, submit · Partner: read | read, write, create, submit (own shops) |
 | Stock Entry Type | Owner: read | read |
+| Item Group (product groups and subgroups) | Owner: read, write, create, delete · Partner: read | read, write, create, delete |
+
+Product groups are shared by all shops (`retail_management.api.categories`):
+groups sit under the root category, subgroups under a group (two levels).
+Renaming moves the products along; only empty categories can be deleted.
 
 Receiving stock (`retail_management.api.receiving`) posts a submitted
 Material Receipt into the shop's warehouse. Owners and managers may receive;

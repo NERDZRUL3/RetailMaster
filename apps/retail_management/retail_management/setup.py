@@ -27,10 +27,13 @@ _SALES_REPORTING = {"Sales Invoice": "r"}
 # Receiving stock posts Material Receipt stock entries into the shop's
 # warehouse; User Permissions keep managers to their own shops' warehouses.
 _RECEIVING = {"Stock Entry": "rwcs", "Stock Entry Type": "r"}
+# Product categories (Item Group tree) are shared by all shops; owners and
+# managers maintain them like the rest of the catalogue.
+_CATEGORIES = {"Item Group": "rwcd"}
 ERPNEXT_PERMISSIONS = {
-	ROLE_OWNER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, **_RECEIVING, "Brand": "rwc"},
+	ROLE_OWNER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, **_RECEIVING, **_CATEGORIES, "Brand": "rwc"},
 	ROLE_PARTNER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, "Stock Entry": "r", "Brand": "rwc"},
-	ROLE_MANAGER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, **_RECEIVING},
+	ROLE_MANAGER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, **_RECEIVING, **_CATEGORIES},
 	# Cashiers get ERPNext permissions with the point of sale (M4).
 }
 _FLAG_TO_PTYPE = {

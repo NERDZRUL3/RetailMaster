@@ -58,8 +58,7 @@ export const router = createRouter({
         },
         {
           path: 'categories',
-          component: () => import('./pages/ComingSoonPage.vue'),
-          props: { section: 'categories' },
+          component: () => import('./pages/inventory/CategoriesPage.vue'),
           meta: { homes: ['owner', 'manager'] },
         },
         {

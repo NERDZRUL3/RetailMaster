@@ -154,7 +154,12 @@
     "stockNote": "Les quantités en stock ne changent que par les réceptions, ventes, transferts et inventaires.",
     "save": "Enregistrer le produit",
     "saving": "Enregistrement…",
-    "saved": "Enregistré."
+    "saved": "Enregistré.",
+    "group": "Groupe",
+    "subgroup": "Sous-groupe",
+    "noSubgroup": "— Aucun —",
+    "noSubgroups": "Aucun sous-groupe dans ce groupe",
+    "manageGroups": "Modifier les groupes"
   },
   "overview": {
     "title": "Vue d’ensemble",
@@ -287,5 +292,24 @@
     "done": "{units} unités reçues dans {shop} ({name}).",
     "history": "Livraisons récentes",
     "noHistory": "Aucune livraison reçue pour l’instant."
+  },
+  "categories": {
+    "title": "Groupes et sous-groupes",
+    "done": "Terminé",
+    "hint": "Communs à tous les magasins. Renommer déplace aussi ses produits ; seuls les groupes vides peuvent être supprimés.",
+    "products": "{count} produit | {count} produits",
+    "addSubgroup": "Sous-groupe",
+    "addGroup": "Nouveau groupe",
+    "rename": "Renommer",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "add": "Ajouter",
+    "newName": "Nouveau nom",
+    "groupName": "Nom du groupe",
+    "subgroupName": "Nom du sous-groupe",
+    "moveTo": "Déplacer {name} vers un autre groupe",
+    "confirmDelete": "Supprimer {name} ?",
+    "pageHint": "Groupes et sous-groupes de vos produits, communs à tous les magasins."
   }
 }
