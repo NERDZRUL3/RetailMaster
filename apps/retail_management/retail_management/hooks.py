@@ -8,6 +8,19 @@ app_license = "gpl-3.0"
 # ERPNext provides the accounting, stock and POS engine this app builds on.
 required_apps = ["erpnext"]
 
+# Tile on the desk's home (/desk): opens the Retail workspace with shops,
+# staff shop access and settings. Owners, partners and system managers only.
+add_to_apps_screen = [
+	{
+		"name": app_name,
+		"logo": "/assets/retail_management/images/retail-logo.svg",
+		"title": "Retail",
+		"route": "/desk/retail",
+		"has_permission": "retail_management.services.permissions.can_open_desk_app",
+		"sequence_id": 2,
+	}
+]
+
 # Roles must exist before the DocTypes that reference them are synced.
 before_install = "retail_management.setup.ensure_roles"
 after_install = "retail_management.setup.after_migrate"

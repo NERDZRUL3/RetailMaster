@@ -101,6 +101,14 @@ class TestShopSetupApi(IntegrationTestCase):
 			frappe.set_user("Administrator")
 			remove_shop(RENAMED)
 
+	def test_desk_tile_is_for_owners_not_staff(self):
+		from retail_management.services.permissions import can_open_desk_app
+
+		frappe.set_user(self.owner)
+		self.assertTrue(can_open_desk_app())
+		frappe.set_user(self.cashier)
+		self.assertFalse(can_open_desk_app())
+
 	def test_cashier_cannot_set_up_shops(self):
 		frappe.set_user(self.cashier)
 		with self.assertRaises(frappe.PermissionError):

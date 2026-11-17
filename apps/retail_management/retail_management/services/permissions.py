@@ -43,6 +43,12 @@ def has_full_shop_access(user: str | None = None) -> bool:
 	return bool(FULL_ACCESS_ROLES.intersection(frappe.get_roles(user)))
 
 
+def can_open_desk_app() -> bool:
+	"""add_to_apps_screen hook: the Retail tile on the desk home is for people
+	who run the business (owners, partners, system managers), not shop staff."""
+	return has_full_shop_access()
+
+
 def get_assigned_shops(user: str | None = None) -> list[str]:
 	"""Shops explicitly assigned to the user through Retail Shop Access."""
 	user = user or frappe.session.user
