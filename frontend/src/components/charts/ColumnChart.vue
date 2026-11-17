@@ -1,6 +1,7 @@
 <script setup lang="ts">
-// Stacked columns: a soft body (first series) under a striped brand top
-// (second series). Hovering a column shows a box with each value and the total.
+// Two series per column: stacked (a soft body under a striped brand top) or,
+// in "pair" mode, side by side (soft first series, solid brand second).
+// Hovering a column shows a box with each value and, if given, the total.
 import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue'
 
 const props = withDefaults(
@@ -16,8 +17,9 @@ const props = withDefaults(
     /** Fraction of each slot used by the column. */
     thickness?: number
     initial?: number
+    mode?: 'stack' | 'pair'
   }>(),
-  { height: 240, axis: true, thickness: 0.42, initial: -1 },
+  { height: 240, axis: true, thickness: 0.42, initial: -1, mode: 'stack' },
 )
 
 const box = ref<HTMLDivElement | null>(null)
@@ -37,7 +39,10 @@ const active = computed(() => hovered.value ?? props.initial)
 const pad = computed(() => ({ top: 10, bottom: 24, left: props.axis ? 40 : 2, right: 2 }))
 
 const axisMax = computed(() => {
-  const max = Math.max(...props.columns.map((c) => c.values[0] + c.values[1]), 1)
+  const max = Math.max(
+    ...props.columns.map((c) => (props.mode === 'pair' ? Math.max(c.values[0], c.values[1]) : c.values[0] + c.values[1])),
+    1,
+  )
   const step = max / 5
   const power = 10 ** Math.floor(Math.log10(step))
   const nice = [1, 2, 2.5, 5, 10].find((n) => n * power >= step) ?? 10
@@ -54,13 +59,24 @@ const bars = computed(() =>
   props.columns.map((column, i) => {
     const x = pad.value.left + i * slot.value + (slot.value - colW.value) / 2
     const [base, top] = column.values
+    if (props.mode === 'pair') {
+      const half = colW.value / 2 - 1
+      return {
+        x,
+        center: x + colW.value / 2,
+        rects: [
+          { x, y: y(base), w: half, h: Math.max(0, y(0) - y(base)), kind: 'soft' },
+          { x: x + half + 2, y: y(top), w: half, h: Math.max(0, y(0) - y(top)), kind: 'solid' },
+        ],
+      }
+    }
     return {
       x,
       center: x + colW.value / 2,
-      baseY: y(base),
-      baseH: Math.max(0, y(0) - y(base)),
-      topY: y(base + top),
-      topH: Math.max(0, y(base) - y(base + top) - 2),
+      rects: [
+        { x, y: y(base), w: colW.value, h: Math.max(0, y(0) - y(base)), kind: 'soft' },
+        { x, y: y(base + top), w: colW.value, h: Math.max(0, y(base) - y(base + top) - 2), kind: 'striped' },
+      ],
     }
   }),
 )
@@ -95,8 +111,16 @@ const tip = computed(() => {
         </template>
       </template>
       <g v-for="(bar, i) in bars" :key="i" :opacity="active < 0 || active === i ? 1 : 0.85">
-        <rect :x="bar.x" :y="bar.baseY" :width="colW" :height="bar.baseH" rx="2" fill="var(--color-brand-200)" />
-        <rect :x="bar.x" :y="bar.topY" :width="colW" :height="bar.topH" :fill="`url(#${id}-lines)`" />
+        <rect
+          v-for="(r, k) in bar.rects"
+          :key="k"
+          :x="r.x"
+          :y="r.y"
+          :width="r.w"
+          :height="r.h"
+          :rx="r.kind === 'striped' ? 0 : 2"
+          :fill="r.kind === 'soft' ? 'var(--color-brand-200)' : r.kind === 'solid' ? 'var(--color-brand-600)' : `url(#${id}-lines)`"
+        />
         <text
           v-if="(columns.length - 1 - i) % every === 0"
           :x="bar.center"

@@ -1,9 +1,9 @@
-"""Overview dashboard figures: correct totals, per-shop scoping, comparison
-with the previous period, and who may see them."""
+"""Dashboard figures: correct totals per widget, per-shop scoping, and who
+may see them."""
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import add_days, nowdate
+from frappe.utils import add_days, get_first_day, getdate, nowdate
 
 from retail_management.api import dashboard
 from retail_management.setup import (
@@ -20,6 +20,12 @@ from retail_management.tests.test_shop_stock_scoping import BUSINESS, get_compan
 SHOP_A = "_RM Dash Shop A"
 SHOP_B = "_RM Dash Shop B"
 CUSTOMER = "_RM Dash Customer"
+
+# (shop, amount, days ago, is return) of the invoices created below
+SALES_A = ((100, 0), (50, 2))
+RETURN_A = (20, 0)
+SALES_B = ((300, 1),)
+OLDER_A = (40, 40)  # in the previous 30-day window
 
 
 def make_customer() -> str:
@@ -44,6 +50,7 @@ def make_invoice(company, warehouse, item, amount, days_ago=0, is_return=False, 
 			"customer": CUSTOMER,
 			"set_posting_time": 1,
 			"posting_date": add_days(nowdate(), -days_ago),
+			"posting_time": "11:30:00",
 			"due_date": add_days(nowdate(), -days_ago),
 			"set_warehouse": warehouse,
 			"update_stock": 0,
@@ -89,14 +96,15 @@ class TestDashboardApi(IntegrationTestCase):
 		grant(cls.manager, SHOP_A)
 		grant(cls.cashier, SHOP_A)
 
-		item = make_item()
-		# This week: shop A sells 100 and 50, one return of 20; shop B sells 300.
-		sale = make_invoice(cls.company, cls.wh_a, item, 100)
-		make_invoice(cls.company, cls.wh_a, item, 50, days_ago=2)
-		make_invoice(cls.company, cls.wh_a, item, 20, is_return=True, return_against=sale)
-		make_invoice(cls.company, cls.wh_b, item, 300, days_ago=1)
-		# Previous week: shop A sold 40.
-		make_invoice(cls.company, cls.wh_a, item, 40, days_ago=10)
+		cls.item = make_item()
+		first = None
+		for amount, days_ago in SALES_A:
+			name = make_invoice(cls.company, cls.wh_a, cls.item, amount, days_ago)
+			first = first or name
+		make_invoice(cls.company, cls.wh_a, cls.item, RETURN_A[0], RETURN_A[1], is_return=True, return_against=first)
+		for amount, days_ago in SALES_B:
+			make_invoice(cls.company, cls.wh_b, cls.item, amount, days_ago)
+		make_invoice(cls.company, cls.wh_a, cls.item, OLDER_A[0], OLDER_A[1])
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
@@ -105,66 +113,68 @@ class TestDashboardApi(IntegrationTestCase):
 		frappe.clear_cache(user=user)
 		frappe.set_user(user)
 
-	def overview(self, user, **kwargs):
+	def data(self, user, shop=None):
 		self.as_user(user)
-		return dashboard.get_overview(**kwargs)
+		return dashboard.get_dashboard(shop=shop)
 
-	def test_owner_sees_both_shops(self):
-		data = self.overview(self.owner, shop=None)
-		names = {row["name"] for row in data["shops"]}
-		self.assertTrue({SHOP_A, SHOP_B} <= names)
+	def test_sales_count_and_previous_window(self):
+		sales = self.data(self.owner, SHOP_A)["sales"]
+		self.assertEqual(sales["value"], 2)  # returns are not sales
+		self.assertEqual(sales["previous"], 1)
+		self.assertEqual(sales["change"], 100.0)
+		self.assertEqual(len(sales["series"]), 30)
+		self.assertEqual(sales["series"][-1]["date"], nowdate())
+		self.assertEqual(sum(point["value"] for point in sales["series"]), 2)
 
-	def test_owner_totals_for_one_shop(self):
-		data = self.overview(self.owner, shop=SHOP_A)
-		kpis = data["kpis"]
-		self.assertEqual(kpis["revenue"]["value"], 130)  # 100 + 50 - 20
-		self.assertEqual(kpis["sales"]["value"], 2)
-		self.assertEqual(kpis["average"]["value"], 75)
-		self.assertEqual(kpis["returns"]["value"], 1)
-		# Previous 7 days: 40, so revenue grew by 225 %.
-		self.assertEqual(kpis["revenue"]["previous"], 40)
-		self.assertEqual(kpis["revenue"]["change"], 225.0)
+	def test_revenue_is_net_of_returns(self):
+		revenue = self.data(self.owner, SHOP_A)["revenue"]
+		month_start = getdate(get_first_day(nowdate()))
+		expected = sum(a for a, d in SALES_A if getdate(add_days(nowdate(), -d)) >= month_start)
+		expected -= RETURN_A[0]
+		self.assertEqual(revenue["value"], expected)
+		self.assertEqual(len(revenue["week"]), 7)
 
-	def test_series_adds_up_and_splits_by_shop(self):
-		data = self.overview(self.owner, shop=None)
-		self.assertEqual(len(data["series"]), 7)
-		self.assertEqual(data["series"][-1]["key"], nowdate())
-		shop_b_total = sum(bucket["by_shop"].get(SHOP_B, 0) for bucket in data["series"])
-		self.assertEqual(shop_b_total, 300)
-		self.assertAlmostEqual(sum(b["total"] for b in data["series"]), data["kpis"]["revenue"]["value"])
+	def test_orders_income_per_day(self):
+		orders = self.data(self.owner, SHOP_A)["orders"]
+		self.assertEqual(len(orders), 15)
+		self.assertEqual(orders[-1]["date"], nowdate())
+		self.assertEqual(sum(day["income"] for day in orders), 130)  # 100 + 50 - 20
 
-	def test_twelve_month_series(self):
-		data = self.overview(self.owner, period="12m", shop=SHOP_A)
-		self.assertTrue(data["monthly"])
-		self.assertEqual(len(data["series"]), 12)
-
-	def test_recent_sales_marks_returns(self):
-		data = self.overview(self.owner, shop=SHOP_A)
+	def test_categories_hours_products_recent(self):
+		data = self.data(self.owner, SHOP_A)
+		self.assertEqual(data["categories"]["monthly"][0]["percent"], 100)
+		self.assertEqual(sum(row["percent"] for row in data["hours"]["monthly"]), 100)
+		self.assertEqual(data["hours"]["monthly"][1]["label"], "10–12")  # sales at 11:30
+		self.assertEqual(data["hours"]["monthly"][1]["percent"], 100)
+		self.assertEqual(data["products"][0]["item_code"], self.item)
+		product = data["products"][0]
+		self.assertEqual(product["sold"], 1)  # two sales, one return (the older sale is outside 30 days)
+		self.assertEqual(product["price"], 75)  # average of the sales only: (100 + 50) / 2
 		self.assertTrue(any(row["is_return"] for row in data["recent"]))
 		self.assertTrue(all(row["shop_name"] == SHOP_A for row in data["recent"]))
 
+	def test_owner_split_by_shop(self):
+		split = {row["shop_name"]: row for row in self.data(self.owner)["customers"]["by_shop"]}
+		self.assertEqual(split[SHOP_A]["sales"], 2)
+		self.assertEqual(split[SHOP_B]["sales"], 1)
+
 	def test_manager_only_sees_own_shop(self):
-		data = self.overview(self.manager, shop=None)
+		data = self.data(self.manager)
 		self.assertEqual([row["name"] for row in data["shops"]], [SHOP_A])
-		self.assertEqual(data["kpis"]["revenue"]["value"], 130)
+		self.assertEqual(data["sales"]["value"], 2)
 		self.assertTrue(all(row["shop_name"] == SHOP_A for row in data["recent"]))
 
 	def test_manager_cannot_ask_for_other_shop(self):
 		self.as_user(self.manager)
 		with self.assertRaises(frappe.PermissionError):
-			dashboard.get_overview(shop=SHOP_B)
+			dashboard.get_dashboard(shop=SHOP_B)
 
 	def test_manager_without_shop_gets_nothing(self):
-		data = self.overview(self.manager_no_shop, shop=None)
+		data = self.data(self.manager_no_shop)
 		self.assertEqual(data["shops"], [])
-		self.assertEqual(data["kpis"], {})
+		self.assertNotIn("sales", data)
 
 	def test_cashier_refused(self):
 		self.as_user(self.cashier)
 		with self.assertRaises(frappe.PermissionError):
-			dashboard.get_overview()
-
-	def test_unknown_period_refused(self):
-		self.as_user(self.owner)
-		with self.assertRaises(frappe.ValidationError):
-			dashboard.get_overview(period="5y")
+			dashboard.get_dashboard()

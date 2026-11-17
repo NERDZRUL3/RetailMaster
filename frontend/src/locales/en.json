@@ -202,47 +202,52 @@
     "back": "Back to the dashboard"
   },
   "dash": {
-    "sample": "Sample data: figures will come from your shops once connected",
-    "orders": "Recent orders",
-    "lastMonth": "{value} last month",
+    "lastMonth": "Last month: {value}",
     "customers": "Customers",
-    "currentCustomers": "Current customers",
+    "currentCustomers": "Buyers (30 days)",
     "newCustomers": "New this month",
     "vsLastMonth": "vs last month",
     "byShop": "By shop",
-    "revenue": "Total revenue",
     "revenueWeek": "Revenue over the last 7 days",
     "thisWeek": "This week",
     "lastWeek": "Last week",
     "topCategories": "Top categories",
-    "filtersSoon": "Filters (coming soon)",
     "range": "Period",
     "ranges": {
       "all": "All time",
       "weekly": "Weekly",
       "monthly": "Monthly"
     },
-    "totalOrders": "Total orders",
     "income": "Income",
     "profit": "Profit",
     "total": "Total",
     "hours": "Sales by time of day",
-    "productSales": "Product sales",
-    "recentOrders": "Recent orders",
+    "productSales": "Best sellers",
+    "recentOrders": "Latest sales",
     "col": {
-      "item": "Item",
-      "stock": "Stock",
-      "oldPrice": "Old price",
+      "item": "Product",
+      "stock": "In stock",
+      "listPrice": "List price",
       "sale": "Discount",
-      "newPrice": "New price",
-      "sold": "Items sold",
-      "actions": "Actions"
+      "avgPrice": "Average price",
+      "sold": "Sold",
+      "open": "Open"
     },
-    "status": {
-      "delivered": "Delivered",
-      "processing": "Processing",
-      "shipped": "Shipped",
-      "cancelled": "Cancelled"
-    }
+    "sales": "Sales (30 days)",
+    "previous30": "{value} in the previous 30 days",
+    "vsPrevious30": "vs previous 30 days",
+    "receipts30": "sales, last 30 days",
+    "revenueMonth": "Revenue this month",
+    "noShop": "You are not assigned to a shop yet. Ask the owner to give you access to one.",
+    "noSalesYet": "No sales recorded yet. The figures appear here as soon as the first sales are made.",
+    "nothingYet": "Nothing yet",
+    "other": "Other",
+    "incomeProfit": "Income and profit",
+    "profitHint": "Last 15 days. Profit is estimated from the products’ stock cost.",
+    "cost": "Cost of goods",
+    "last30": "Last 30 days",
+    "sale": "Sale",
+    "return": "Return",
+    "openProduct": "Open {name}"
   }
 }

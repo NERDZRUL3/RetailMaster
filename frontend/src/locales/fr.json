@@ -202,47 +202,52 @@
     "back": "Retour au tableau de bord"
   },
   "dash": {
-    "sample": "Données d’exemple : les chiffres viendront de vos magasins une fois connectés",
-    "orders": "Commandes récentes",
-    "lastMonth": "{value} le mois dernier",
+    "lastMonth": "Mois dernier : {value}",
     "customers": "Clients",
-    "currentCustomers": "Clients actuels",
+    "currentCustomers": "Acheteurs (30 jours)",
     "newCustomers": "Nouveaux ce mois",
     "vsLastMonth": "vs mois dernier",
     "byShop": "Par magasin",
-    "revenue": "Chiffre d’affaires",
     "revenueWeek": "Chiffre d’affaires des 7 derniers jours",
     "thisWeek": "Cette semaine",
     "lastWeek": "Semaine dernière",
     "topCategories": "Meilleures catégories",
-    "filtersSoon": "Filtres (bientôt)",
     "range": "Période",
     "ranges": {
       "all": "Tout",
       "weekly": "Semaine",
       "monthly": "Mois"
     },
-    "totalOrders": "Total des commandes",
     "income": "Recettes",
     "profit": "Bénéfice",
     "total": "Total",
     "hours": "Ventes par heure",
-    "productSales": "Ventes par produit",
-    "recentOrders": "Commandes récentes",
+    "productSales": "Meilleures ventes",
+    "recentOrders": "Dernières ventes",
     "col": {
-      "item": "Article",
-      "stock": "Stock",
-      "oldPrice": "Ancien prix",
+      "item": "Produit",
+      "stock": "En stock",
+      "listPrice": "Prix catalogue",
       "sale": "Remise",
-      "newPrice": "Nouveau prix",
+      "avgPrice": "Prix moyen",
       "sold": "Vendus",
-      "actions": "Actions"
+      "open": "Ouvrir"
     },
-    "status": {
-      "delivered": "Livrée",
-      "processing": "En cours",
-      "shipped": "Expédiée",
-      "cancelled": "Annulée"
-    }
+    "sales": "Ventes (30 jours)",
+    "previous30": "{value} les 30 jours précédents",
+    "vsPrevious30": "vs 30 jours précédents",
+    "receipts30": "ventes, 30 derniers jours",
+    "revenueMonth": "Chiffre d’affaires du mois",
+    "noShop": "Vous n’êtes affecté à aucun magasin. Demandez au propriétaire de vous en donner l’accès.",
+    "noSalesYet": "Aucune vente enregistrée. Les chiffres apparaissent ici dès les premières ventes.",
+    "nothingYet": "Rien pour l’instant",
+    "other": "Autres",
+    "incomeProfit": "Recettes et bénéfice",
+    "profitHint": "15 derniers jours. Le bénéfice est estimé à partir du coût en stock des produits.",
+    "cost": "Coût des marchandises",
+    "last30": "30 derniers jours",
+    "sale": "Vente",
+    "return": "Retour",
+    "openProduct": "Ouvrir {name}"
   }
 }

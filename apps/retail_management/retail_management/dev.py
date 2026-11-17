@@ -87,6 +87,9 @@ def seed_demo(passwords: dict | str | None = None, password: str | None = None):
 
 	_seed_demo_products(company)
 	_seed_demo_sales(company)
+	_backfill_demo_sales(company)
+	_assign_demo_categories()
+	_spread_demo_sale_times()
 
 	frappe.db.commit()  # nosemgrep: one-off dev seed run from the command line
 	return [user[0] for user in DEMO_USERS]
@@ -233,3 +236,87 @@ def _seed_demo_sales(company: str):
 				name = sell(warehouse, days_ago, scale)
 				if recent and rng.random() < 0.05:
 					sell(warehouse, days_ago, 0.3, is_return=True, against=name)
+
+
+# Busy hours of a stationery shop: (hour, weight)
+DEMO_HOURS = ((9, 3), (10, 6), (11, 7), (12, 4), (13, 2), (14, 3), (15, 5), (16, 6), (17, 6), (18, 4), (19, 2))
+
+
+def _spread_demo_sale_times():
+	"""Give demo sales realistic times of day (derived from the receipt name,
+	so running this again changes nothing). Only touches demo sales."""
+	import hashlib
+
+	weights = [hour for hour, weight in DEMO_HOURS for _ in range(weight)]
+	for name in frappe.get_all("Sales Invoice", filters={"remarks": DEMO_SALE_REMARK}, pluck="name"):
+		digest = int(hashlib.sha256(name.encode()).hexdigest(), 16)
+		hour = weights[digest % len(weights)]
+		minute = (digest // 97) % 60
+		frappe.db.set_value(
+			"Sales Invoice", name, "posting_time", f"{hour:02d}:{minute:02d}:00", update_modified=False
+		)
+
+
+# Demo product -> demo category (an Item Group under the root group)
+DEMO_CATEGORIES = {"2000000000011": "Demo Pens", "2000000000028": "Demo Paper", "2000000000035": "Demo Notebooks"}
+
+
+def _assign_demo_categories():
+	"""Put each demo product in its own category, including on past demo
+	sales lines, so the category chart has something to compare."""
+	root = frappe.db.get_value("Item Group", {"is_group": 1, "parent_item_group": ["in", ["", None]]}, "name") or "All Item Groups"
+	for code, group in DEMO_CATEGORIES.items():
+		if not frappe.db.exists("Item Group", group):
+			frappe.get_doc(
+				{"doctype": "Item Group", "item_group_name": group, "parent_item_group": root, "is_group": 0}
+			).insert(ignore_permissions=True)
+		if frappe.db.exists("Item", code):
+			frappe.db.set_value("Item", code, "item_group", group, update_modified=False)
+			frappe.db.sql(
+				"""update `tabSales Invoice Item` item join `tabSales Invoice` inv on inv.name = item.parent
+				set item.item_group = %s where item.item_code = %s and inv.remarks = %s""",
+				(group, code, DEMO_SALE_REMARK),
+			)
+
+
+def _backfill_demo_sales(company: str):
+	"""Daily demo sales between 35 and 70 days ago (older seeds only had one
+	every 4 days there), so 30-day comparisons look like a real shop."""
+	import random
+
+	from frappe.utils import add_days, nowdate
+
+	customers = [_demo_customer(name) for name in DEMO_CUSTOMERS]
+	products = [(barcode, price) for barcode, _name, price, _qty, _level in DEMO_PRODUCTS]
+	rng = random.Random(70)
+	for shop_index, shop in enumerate(DEMO_SHOPS):
+		warehouse = frappe.db.get_value("Retail Shop", shop, "warehouse")
+		for days_ago in range(69, 34, -1):
+			date = add_days(nowdate(), -days_ago)
+			if frappe.db.exists("Sales Invoice", {"remarks": DEMO_SALE_REMARK, "set_warehouse": warehouse, "posting_date": date}):
+				continue
+			for _ in range(rng.randint(1, 3)):
+				doc = frappe.get_doc(
+					{
+						"doctype": "Sales Invoice",
+						"company": company,
+						"customer": rng.choice(customers),
+						"set_posting_time": 1,
+						"posting_date": date,
+						"due_date": date,
+						"set_warehouse": warehouse,
+						"update_stock": 0,
+						"remarks": DEMO_SALE_REMARK,
+						"items": [
+							{
+								"item_code": code,
+								"qty": max(1, round(rng.randint(1, 12) * (1.0 if shop_index == 0 else 0.7))),
+								"rate": price,
+								"warehouse": warehouse,
+							}
+							for code, price in rng.sample(products, rng.randint(1, len(products)))
+						],
+					}
+				)
+				doc.insert(ignore_permissions=True)
+				doc.submit()
