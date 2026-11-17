@@ -60,7 +60,8 @@
       "settings": "Settings",
       "receive": "Receive stock",
       "pos": "Point of sale",
-      "team": "Team"
+      "team": "Team",
+      "shops": "Shops"
     },
     "pos": {
       "title": "Point of sale",
@@ -256,7 +257,9 @@
     "last30": "Last 30 days",
     "sale": "Sale",
     "return": "Return",
-    "openProduct": "Open {name}"
+    "openProduct": "Open {name}",
+    "noShopOwner": "You have no shop yet. Add your first shop to start selling and give your staff access.",
+    "addShop": "Add your first shop"
   },
   "receive": {
     "title": "Receive stock",
@@ -704,6 +707,7 @@
     "created": "{name} is ready.",
     "off": "Off",
     "switchOff": "Switch off",
-    "switchOn": "Switch on"
+    "switchOn": "Switch on",
+    "pageSubtitle": "Your shops, each with its own stock and till."
   }
 }

@@ -8,6 +8,7 @@ import { ApiError } from '@/api'
 import { type ShopRow, shopsApi } from '@/shops'
 
 const { t } = useI18n()
+withDefaults(defineProps<{ heading?: boolean }>(), { heading: true })
 
 const shops = ref<ShopRow[] | null>(null)
 const companies = ref<string[]>([])
@@ -59,8 +60,8 @@ async function toggle(shop: ShopRow) {
 
 <template>
   <section v-if="shops" class="card-pad">
-    <h2 class="section-title">{{ t('shopSetup.title') }}</h2>
-    <p class="hint mt-1">{{ t('shopSetup.hint') }}</p>
+    <h2 v-if="heading" class="section-title">{{ t('shopSetup.title') }}</h2>
+    <p class="hint" :class="{ 'mt-1': heading }">{{ t('shopSetup.hint') }}</p>
 
     <ul v-if="shops.length" class="list stagger mt-4">
       <li v-for="shop in shops" :key="shop.name" class="flex flex-wrap items-center gap-3 px-4 py-3" :class="shop.enabled ? '' : 'opacity-60'">

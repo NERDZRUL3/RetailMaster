@@ -11,6 +11,7 @@ import DonutChart from '@/components/charts/DonutChart.vue'
 import { type Dashboard, dashboardApi, formatCompact, formatDay, type Range, RANGES, timeAgo } from '@/dashboard'
 import { formatMoney } from '@/inventory'
 import { useCountUp } from '@/motion'
+import { session } from '@/session'
 
 const { t, locale } = useI18n()
 
@@ -143,6 +144,11 @@ onMounted(() => requestAnimationFrame(() => requestAnimationFrame(() => (barsSho
     </div>
 
     <p v-if="error" class="notice-error mb-4" role="alert">{{ error }}</p>
+    <!-- No shop yet: the owner can add one, a manager has to ask -->
+    <div v-else-if="data && !hasShop && session.context?.can_manage_users" class="notice-warn flex flex-wrap items-center justify-between gap-3">
+      <span>{{ t('dash.noShopOwner') }}</span>
+      <RouterLink to="/shops" class="btn-primary">{{ t('dash.addShop') }}</RouterLink>
+    </div>
     <p v-else-if="data && !hasShop" class="notice-warn">{{ t('dash.noShop') }}</p>
     <p v-else-if="noSalesYet" class="notice-info mb-4">{{ t('dash.noSalesYet') }}</p>
 

@@ -617,7 +617,7 @@ body::before {
 .nav-item:is(:hover, [aria-current='page']) .nav-icon--dashboard { animation: icon-turn-quarter 600ms var(--ease-spring); }
 .nav-item:is(:hover, [aria-current='page']) .nav-icon--settings { animation: icon-turn-half 800ms var(--ease-out); }
 .nav-item:is(:hover, [aria-current='page']) .nav-icon--returns { animation: icon-turn-back 700ms var(--ease-out); }
-.nav-item:is(:hover, [aria-current='page']) :is(.nav-icon--pos, .nav-icon--team, .nav-icon--shop, .nav-icon--suppliers) { animation: icon-hop 550ms var(--ease-out); }
+.nav-item:is(:hover, [aria-current='page']) :is(.nav-icon--pos, .nav-icon--team, .nav-icon--shop, .nav-icon--shops, .nav-icon--suppliers) { animation: icon-hop 550ms var(--ease-out); }
 .nav-item:is(:hover, [aria-current='page']) :is(.nav-icon--products, .nav-icon--inventory, .nav-icon--purchaseOrders) { animation: icon-wobble 600ms ease-in-out; }
 .nav-item:is(:hover, [aria-current='page']) :is(.nav-icon--receive, .nav-icon--orders) { animation: icon-drive 650ms var(--ease-out); }
 .nav-item:is(:hover, [aria-current='page']) .nav-icon--reports { animation: icon-grow 550ms var(--ease-spring); transform-origin: bottom; }

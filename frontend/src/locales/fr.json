@@ -60,7 +60,8 @@
       "settings": "Paramètres",
       "receive": "Réception",
       "pos": "Caisse",
-      "team": "Équipe"
+      "team": "Équipe",
+      "shops": "Magasins"
     },
     "pos": {
       "title": "Caisse",
@@ -256,7 +257,9 @@
     "last30": "30 derniers jours",
     "sale": "Vente",
     "return": "Retour",
-    "openProduct": "Ouvrir {name}"
+    "openProduct": "Ouvrir {name}",
+    "noShopOwner": "Vous n’avez encore aucun magasin. Ajoutez votre premier magasin pour commencer à vendre et donner l’accès à votre équipe.",
+    "addShop": "Ajouter votre premier magasin"
   },
   "receive": {
     "title": "Réception de stock",
@@ -648,7 +651,7 @@
     "create": "Créer le compte",
     "created": "Compte de {name} créé.",
     "saved": "Compte de {name} enregistré.",
-    "noShopsYet": "Aucune boutique pour l’instant. Les gérants et caissiers travaillent dans une boutique : créez la première ici."
+    "noShopsYet": "Aucun magasin pour l’instant. Les gérants et caissiers travaillent dans un magasin : créez le premier ici."
   },
   "recover": {
     "title": "Réinitialiser le mot de passe",
@@ -669,7 +672,7 @@
     "setPassword": "Enregistrer le mot de passe",
     "saving": "Enregistrement…",
     "passwordSet": "Votre nouveau mot de passe est enregistré. Vous pouvez vous connecter.",
-    "codesLeft": "Plus aucun code de secours : créez-en de nouveaux dans Réglages après connexion. | Il reste 1 code de secours : créez-en de nouveaux bientôt dans Réglages. | Il reste {count} codes de secours.",
+    "codesLeft": "Plus aucun code de secours : créez-en de nouveaux dans Paramètres après connexion. | Il reste 1 code de secours : créez-en de nouveaux bientôt dans Paramètres. | Il reste {count} codes de secours.",
     "tooMany": "Trop de tentatives. Attendez une heure puis réessayez.",
     "backToSignIn": "Retour à la connexion"
   },
@@ -692,18 +695,19 @@
     "printHint": "Chaque code s’utilise une fois sur la page de connexion (Mot de passe oublié ?). Conservez cette feuille en lieu sûr."
   },
   "shopSetup": {
-    "title": "Boutiques",
-    "hint": "Chaque boutique a son propre emplacement de stock. Les gérants et caissiers ne voient que les boutiques que vous leur donnez dans la page Équipe.",
-    "none": "Aucune boutique pour l’instant. Ajoutez votre première boutique ci-dessous.",
-    "noCompany": "Configurez d’abord la société dans ERPNext (assistant de configuration du bureau), puis ajoutez les boutiques ici.",
-    "name": "Nom de la boutique",
-    "namePlaceholder": "ex. Boutique centre-ville",
+    "title": "Magasins",
+    "hint": "Chaque magasin a son propre emplacement de stock. Les gérants et caissiers ne voient que les magasins que vous leur donnez dans la page Équipe.",
+    "none": "Aucun magasin pour l’instant. Ajoutez votre premier magasin ci-dessous.",
+    "noCompany": "Configurez d’abord la société dans ERPNext (assistant de configuration du bureau), puis ajoutez les magasins ici.",
+    "name": "Nom du magasin",
+    "namePlaceholder": "ex. Magasin centre-ville",
     "company": "Société",
-    "add": "Ajouter la boutique",
+    "add": "Ajouter le magasin",
     "creating": "Ajout…",
-    "created": "{name} est prête.",
-    "off": "Désactivée",
+    "created": "{name} est prêt.",
+    "off": "Désactivé",
     "switchOff": "Désactiver",
-    "switchOn": "Activer"
+    "switchOn": "Activer",
+    "pageSubtitle": "Vos magasins, chacun avec son stock et sa caisse."
   }
 }

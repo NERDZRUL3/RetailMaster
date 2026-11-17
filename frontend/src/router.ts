@@ -126,6 +126,11 @@ export const router = createRouter({
           meta: { team: true },
         },
         {
+          path: 'shops',
+          component: () => import('./pages/settings/ShopsPage.vue'),
+          meta: { team: true },
+        },
+        {
           path: 'settings',
           component: () => import('./pages/settings/SettingsPage.vue'),
           meta: { settings: true },

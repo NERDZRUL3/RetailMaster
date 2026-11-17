@@ -17,6 +17,7 @@ const route = useRoute()
 const ICONS: Record<string, string[]> = {
   dashboard: ['M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z'],
   shop: ['M4 10v9h16v-9M3 10l2-5h14l2 5M3 10h18M9 19v-5h6v5'],
+  shops: ['M3 9.5 4.5 4h15L21 9.5', 'M3 9.5h18v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0v-1Z', 'M5 13v7h14v-7M10 20v-4h4v4'],
   pos: ['M4 4h16v10H4zM8 18h8M12 14v4M7 8h4'],
   team: ['M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1M16 3.5a4 4 0 0 1 0 7M22 21v-1a6 6 0 0 0-4-5.6'],
   products: ['M12 3 4 7v10l8 4 8-4V7l-8-4Z', 'm4 7 8 4 8-4M12 11v10'],
@@ -63,7 +64,7 @@ const menu = computed<NavItem[]>(() => {
       { to: '/reports', key: 'reports' },
     )
   }
-  if (session.context?.can_manage_users) items.push({ to: '/team', key: 'team' })
+  if (session.context?.can_manage_users) items.push({ to: '/shops', key: 'shops' }, { to: '/team', key: 'team' })
   if (session.context?.can_edit_settings) items.push({ to: '/settings', key: 'settings' })
   return items
 })
