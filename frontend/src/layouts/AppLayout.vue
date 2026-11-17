@@ -18,6 +18,7 @@ const ICONS: Record<string, string[]> = {
   dashboard: ['M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z'],
   shop: ['M4 10v9h16v-9M3 10l2-5h14l2 5M3 10h18M9 19v-5h6v5'],
   pos: ['M4 4h16v10H4zM8 18h8M12 14v4M7 8h4'],
+  team: ['M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1M16 3.5a4 4 0 0 1 0 7M22 21v-1a6 6 0 0 0-4-5.6'],
   products: ['M12 3 4 7v10l8 4 8-4V7l-8-4Z', 'm4 7 8 4 8-4M12 11v10'],
   categories: ['M4 5h7v14H4zM14 5h6v5h-6zM14 14h6v5h-6z'],
   receive: ['M3 7h11v9H3zM14 10h4l3 3v3h-7', 'M7 19.5h.01M17 19.5h.01M8.5 9.5 10 11l3-3'],
@@ -62,6 +63,7 @@ const menu = computed<NavItem[]>(() => {
       { to: '/reports', key: 'reports' },
     )
   }
+  if (session.context?.can_manage_users) items.push({ to: '/team', key: 'team' })
   if (session.context?.can_edit_settings) items.push({ to: '/settings', key: 'settings' })
   return items
 })

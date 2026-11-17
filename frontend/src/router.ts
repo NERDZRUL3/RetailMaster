@@ -14,6 +14,8 @@ declare module 'vue-router' {
     receive?: boolean
     /** Only for users who may sell at the till (owners, managers, cashiers). */
     sell?: boolean
+    /** Only for the owner: team accounts. */
+    team?: boolean
   }
 }
 
@@ -118,6 +120,11 @@ export const router = createRouter({
           meta: { homes: ['owner', 'manager'] },
         },
         {
+          path: 'team',
+          component: () => import('./pages/settings/TeamPage.vue'),
+          meta: { team: true },
+        },
+        {
           path: 'settings',
           component: () => import('./pages/settings/SettingsPage.vue'),
           meta: { settings: true },
@@ -139,6 +146,7 @@ router.beforeEach(async (to) => {
   if (to.meta.settings && !context.can_edit_settings) return homePath(context.home)
   if (to.meta.receive && !context.can_receive) return homePath(context.home)
   if (to.meta.sell && !context.can_sell) return homePath(context.home)
+  if (to.meta.team && !context.can_manage_users) return homePath(context.home)
   if (to.path === '/no-access') return homePath(context.home)
   return true
 })

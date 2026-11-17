@@ -53,7 +53,7 @@ onBeforeUnmount(() => (before as HTMLElement | null)?.focus?.())
         aria-modal="true"
         :aria-label="props.title"
         tabindex="-1"
-        class="card flex max-h-full w-full flex-col overflow-hidden outline-none"
+        class="card flex max-h-[calc(100dvh-1.5rem)] w-full flex-col overflow-hidden outline-none sm:max-h-[calc(100dvh-3rem)]"
         :class="wide ? 'max-w-2xl' : 'max-w-md'"
       >
         <div class="flex items-center justify-between gap-3 px-5 pt-5">

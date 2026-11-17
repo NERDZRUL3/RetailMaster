@@ -59,7 +59,9 @@ async function submit() {
         <input
           id="login-email"
           v-model="email"
-          type="email"
+          type="text"
+          autocapitalize="none"
+          spellcheck="false"
           dir="ltr"
           required
           autocomplete="username"

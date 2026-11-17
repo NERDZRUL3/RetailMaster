@@ -14,12 +14,12 @@
   "auth": {
     "title": "Connexion",
     "subtitle": "Utilisez le compte fourni par le propriétaire du magasin.",
-    "email": "E-mail",
+    "email": "E-mail ou identifiant",
     "password": "Mot de passe",
     "signIn": "Se connecter",
     "signingIn": "Connexion…",
     "signOut": "Se déconnecter",
-    "wrongCredentials": "E-mail ou mot de passe incorrect.",
+    "wrongCredentials": "E-mail, identifiant ou mot de passe incorrect.",
     "serverError": "Impossible de joindre le serveur. Réessayez."
   },
   "roles": {
@@ -58,7 +58,8 @@
       "reports": "Rapports",
       "settings": "Paramètres",
       "receive": "Réception",
-      "pos": "Caisse"
+      "pos": "Caisse",
+      "team": "Équipe"
     },
     "pos": {
       "title": "Caisse",
@@ -593,5 +594,58 @@
     "receivedDone": "{units} unités réceptionnées dans {shop}.",
     "deliveries": "Livraisons",
     "printTitle": "Bon de commande"
+  },
+  "team": {
+    "title": "Équipe",
+    "subtitle": "Le compte de chacun : rôle, magasins et connexion.",
+    "add": "Nouveau compte",
+    "search": "Chercher par nom, e-mail ou identifiant",
+    "showOff": "Afficher les comptes désactivés ({n})",
+    "you": "Vous",
+    "off": "Désactivé",
+    "allShops": "Tous les magasins",
+    "lastLogin": "dernière connexion {when}",
+    "never": "jamais",
+    "edit": "Modifier",
+    "empty": "Aucun compte ne correspond.",
+    "editTitle": "Modifier le compte",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "E-mail",
+    "username": "Identifiant",
+    "optional": "Facultatif",
+    "signInHint": "La personne se connecte avec son e-mail ou son identifiant.",
+    "signInEmailOnly": "La personne se connecte avec son e-mail. La connexion par identifiant est désactivée dans les paramètres système.",
+    "role": "Rôle",
+    "tiers": {
+      "owner": "Propriétaire",
+      "partner": "Associé",
+      "manager": "Gérant de magasin",
+      "cashier": "Caissier"
+    },
+    "tierHelp": {
+      "owner": "Tout, dans tous les magasins, y compris cette page et les paramètres.",
+      "partner": "Voit les chiffres, le stock et les commandes de tous les magasins ; ne modifie rien.",
+      "manager": "Gère ses magasins : produits, stock, commandes, caisse.",
+      "cashier": "Vend à la caisse de ses magasins."
+    },
+    "ownRole": "Vous ne pouvez pas changer votre propre rôle.",
+    "shops": "Magasins",
+    "needShop": "Choisissez au moins un magasin.",
+    "password": "Mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "keepPassword": "Laisser vide pour garder le mot de passe actuel",
+    "show": "Afficher",
+    "hide": "Masquer",
+    "generate": "Générer",
+    "copy": "Copier",
+    "copied": "Copié",
+    "passwordHint": "Donnez ce mot de passe à la personne ; elle peut se connecter tout de suite. Il ne sera plus affiché.",
+    "passwordChangeHint": "Un nouveau mot de passe déconnecte la personne de ses autres appareils.",
+    "active": "Compte actif",
+    "offHint": "Un compte désactivé ne peut plus se connecter. Ses ventes et son historique restent.",
+    "create": "Créer le compte",
+    "created": "Compte de {name} créé.",
+    "saved": "Compte de {name} enregistré."
   }
 }

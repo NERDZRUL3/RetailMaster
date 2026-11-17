@@ -183,6 +183,35 @@ Side effect: once a doctype has Custom DocPerms, Frappe uses those instead
 of the standard ones, so later ERPNext upgrades that change that doctype's
 standard permissions do not apply automatically.
 
+## Team accounts
+
+`retail_management.api.users` (the Team page) lets Retail Owners and System
+Managers create and change staff accounts: name, email, username, role,
+shops, password, active or switched off.
+
+- Only accounts with a retail role and without System Manager are listed or
+  changed; the Administrator never is. Only the four retail roles can be
+  given, so the page cannot hand out back-office administrator rights.
+  Writes run with `ignore_permissions` after these checks, so owners need
+  no User permissions in the back office.
+- Managers and cashiers need at least one shop (Retail Shop Access, which
+  syncs their User Permissions); owners and partners get none (they see
+  every shop).
+- Passwords: at least 8 characters and the site's password policy
+  (strength score) when enabled. They are never returned. Setting a new
+  password, or switching an account off, signs that person out everywhere
+  else. A strong password generator runs in the browser.
+- Changing someone's email renames the User (links follow). Frappe's
+  `User.after_rename` renames their Notification Settings with a permission
+  check that cannot be skipped, so the rename alone runs as Administrator.
+- Lock-out guards: you cannot switch off your own account or change your
+  own role, and the last active owner cannot be switched off or demoted.
+- Accounts are switched off, never deleted, so sales and history keep
+  their author.
+- Signing in with a username is enabled once by the patch
+  `v0_1.allow_username_login` (System Settings "Allow Login using User
+  Name"); the owner can turn it off there.
+
 ## A manager or cashier with no shop
 
 Frappe treats "no User Permissions" as "no restriction". To stop a manager
@@ -220,6 +249,12 @@ purchasing, sales and POS documents). Tested in `test_inventory_api.py`.
   and received in two deliveries with stock in at the order's cost and
   over-receipt refused; delete draft, cancel, close; manager limited to own
   shop, partner read-only, cashier refused.
+- `tests/test_users_api.py` (5 tests): owner creates an account (password
+  checked by sign-in), renames the email, changes username, role, shops,
+  password, switches it off; weak or missing password, cashier without a
+  shop, taken email or username and non-retail roles refused; no self
+  lock-out; administrators not listed or changeable; partner and manager
+  refused.
 - `tests/test_dashboard_api.py` (10 tests): overview figures net of returns,
   comparison with the previous period, daily and monthly series split by
   shop, latest sales, manager limited to own shop, cashier refused.

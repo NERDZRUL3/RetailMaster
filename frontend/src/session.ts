@@ -28,6 +28,8 @@ export interface SessionContext {
   can_sell?: boolean
   /** Owners and managers: may manage suppliers and purchase orders. */
   can_buy?: boolean
+  /** Owners: may manage the team's accounts. */
+  can_manage_users?: boolean
   csrf_token: string
 }
 

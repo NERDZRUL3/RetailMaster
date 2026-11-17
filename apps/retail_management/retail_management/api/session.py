@@ -48,6 +48,7 @@ def get_context() -> dict:
 		"can_receive": _can_receive(),
 		"can_sell": _can_sell(),
 		"can_buy": _can_buy(),
+		"can_manage_users": _can_manage_users(),
 		"csrf_token": frappe.sessions.get_csrf_token(),
 	}
 
@@ -60,6 +61,13 @@ def set_language(language: str) -> str:
 
 	frappe.db.set_value("User", frappe.session.user, "language", language)
 	return language
+
+
+def _can_manage_users() -> bool:
+	"""Owners manage the team's accounts."""
+	from retail_management.api.users import can_manage_users
+
+	return can_manage_users()
 
 
 def _can_buy() -> bool:

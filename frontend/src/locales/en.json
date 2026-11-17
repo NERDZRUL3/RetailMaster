@@ -14,12 +14,12 @@
   "auth": {
     "title": "Sign in",
     "subtitle": "Use the account your shop owner gave you.",
-    "email": "Email",
+    "email": "Email or username",
     "password": "Password",
     "signIn": "Sign in",
     "signingIn": "Signing in…",
     "signOut": "Sign out",
-    "wrongCredentials": "Wrong email or password.",
+    "wrongCredentials": "Wrong email, username or password.",
     "serverError": "Could not reach the server. Try again."
   },
   "roles": {
@@ -58,7 +58,8 @@
       "reports": "Reports",
       "settings": "Settings",
       "receive": "Receive stock",
-      "pos": "Point of sale"
+      "pos": "Point of sale",
+      "team": "Team"
     },
     "pos": {
       "title": "Point of sale",
@@ -593,5 +594,58 @@
     "receivedDone": "{units} units received into {shop}.",
     "deliveries": "Deliveries",
     "printTitle": "Purchase order"
+  },
+  "team": {
+    "title": "Team",
+    "subtitle": "Everyone’s account: role, shops and how they sign in.",
+    "add": "New account",
+    "search": "Search by name, email or username",
+    "showOff": "Show switched-off accounts ({n})",
+    "you": "You",
+    "off": "Switched off",
+    "allShops": "All shops",
+    "lastLogin": "last sign-in {when}",
+    "never": "never",
+    "edit": "Edit",
+    "empty": "No accounts match.",
+    "editTitle": "Edit account",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "username": "Username",
+    "optional": "Optional",
+    "signInHint": "They sign in with their email or their username.",
+    "signInEmailOnly": "They sign in with their email. Signing in with a username is switched off in System Settings.",
+    "role": "Role",
+    "tiers": {
+      "owner": "Owner",
+      "partner": "Partner",
+      "manager": "Shop manager",
+      "cashier": "Cashier"
+    },
+    "tierHelp": {
+      "owner": "Everything, in every shop, including this page and settings.",
+      "partner": "Sees every shop’s figures, stock and orders; changes nothing.",
+      "manager": "Runs their shops: products, stock, orders, till.",
+      "cashier": "Sells at the till of their shops."
+    },
+    "ownRole": "You cannot change your own role.",
+    "shops": "Shops",
+    "needShop": "Choose at least one shop.",
+    "password": "Password",
+    "newPassword": "New password",
+    "keepPassword": "Leave empty to keep the current password",
+    "show": "Show",
+    "hide": "Hide",
+    "generate": "Generate",
+    "copy": "Copy",
+    "copied": "Copied",
+    "passwordHint": "Give this password to the person; they can sign in straight away. It is never shown again.",
+    "passwordChangeHint": "A new password signs the person out of their other devices.",
+    "active": "Account active",
+    "offHint": "A switched-off account cannot sign in. Its sales and history stay.",
+    "create": "Create account",
+    "created": "Account for {name} created.",
+    "saved": "Account for {name} saved."
   }
 }
