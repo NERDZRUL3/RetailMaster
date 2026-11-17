@@ -1,7 +1,7 @@
 {
  "app": "retail_management",
  "charts": [],
- "content": "[{\"id\": \"03fe07abc4\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Your shops</b></span>\", \"col\": 12}}, {\"id\": \"78bdb88c4c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Retail interface\", \"col\": 3}}, {\"id\": \"c266bebee6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Shops\", \"col\": 3}}, {\"id\": \"a7e2c5fe07\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Staff shop access\", \"col\": 3}}, {\"id\": \"c4dba31729\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Retail Settings\", \"col\": 3}}, {\"id\": \"154d9d622b\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"771e0468fa\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Everything retail</b></span>\", \"col\": 12}}, {\"id\": \"e8c74ff40a\", \"type\": \"card\", \"data\": {\"card_name\": \"Shops and staff\", \"col\": 4}}, {\"id\": \"870acabfad\", \"type\": \"card\", \"data\": {\"card_name\": \"Shop setup in ERPNext\", \"col\": 4}}, {\"id\": \"0507839fba\", \"type\": \"card\", \"data\": {\"card_name\": \"Till records\", \"col\": 4}}, {\"id\": \"5c0rr3ct01\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"5c0rr3ct02\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Fix wrong stock</b></span>\", \"col\": 12}}, {\"id\": \"5c0rr3ct03\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Correct stock\", \"col\": 3}}, {\"id\": \"5c0rr3ct04\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Entries\", \"col\": 3}}, {\"id\": \"5c0rr3ct05\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Reconciliations\", \"col\": 3}}, {\"id\": \"5c0rr3ct06\", \"type\": \"card\", \"data\": {\"card_name\": \"Stock corrections\", \"col\": 4}}]",
+ "content": "[{\"id\": \"03fe07abc4\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Your shops</b></span>\", \"col\": 12}}, {\"id\": \"78bdb88c4c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Retail interface\", \"col\": 3}}, {\"id\": \"c266bebee6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Shops\", \"col\": 3}}, {\"id\": \"a7e2c5fe07\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Staff shop access\", \"col\": 3}}, {\"id\": \"c4dba31729\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Retail Settings\", \"col\": 3}}, {\"id\": \"b4ckup0001\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Backups\", \"col\": 3}}, {\"id\": \"154d9d622b\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"771e0468fa\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Everything retail</b></span>\", \"col\": 12}}, {\"id\": \"e8c74ff40a\", \"type\": \"card\", \"data\": {\"card_name\": \"Shops and staff\", \"col\": 4}}, {\"id\": \"870acabfad\", \"type\": \"card\", \"data\": {\"card_name\": \"Shop setup in ERPNext\", \"col\": 4}}, {\"id\": \"0507839fba\", \"type\": \"card\", \"data\": {\"card_name\": \"Till records\", \"col\": 4}}, {\"id\": \"5c0rr3ct01\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"5c0rr3ct02\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Fix wrong stock</b></span>\", \"col\": 12}}, {\"id\": \"5c0rr3ct03\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Correct stock\", \"col\": 3}}, {\"id\": \"5c0rr3ct04\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Entries\", \"col\": 3}}, {\"id\": \"5c0rr3ct05\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stock Reconciliations\", \"col\": 3}}, {\"id\": \"5c0rr3ct06\", \"type\": \"card\", \"data\": {\"card_name\": \"Stock corrections\", \"col\": 4}}]",
  "creation": "2026-11-17 16:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -215,7 +215,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-11-17 18:00:00.000000",
+ "modified": "2026-11-17 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Retail Management",
  "name": "Retail",
@@ -269,6 +269,12 @@
    "label": "Stock Reconciliations",
    "link_to": "Stock Reconciliation",
    "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Backups",
+   "link_to": "retail-backups",
+   "type": "Page"
   }
  ],
  "sidebar_items": [
@@ -333,6 +339,19 @@
    "label": "Retail Settings",
    "link_to": "Retail Settings",
    "link_type": "DocType",
+   "open_in_new_tab": 0,
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "hard-drive",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Backups",
+   "link_to": "retail-backups",
+   "link_type": "Page",
    "open_in_new_tab": 0,
    "show_arrow": 0,
    "type": "Link"

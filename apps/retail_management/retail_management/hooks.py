@@ -73,3 +73,9 @@ doc_events = {
 		"before_validate": "retail_management.api.purchasing.clear_default_rejected_warehouse"
 	},
 }
+
+# Timed whole-site backups (Backups page in the desk). Checked every hour on the
+# long queue; runs when the chosen day and hour come round.
+scheduler_events = {
+	"hourly_long": ["retail_management.services.backup.run_scheduled_backup"],
+}

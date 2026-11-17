@@ -135,3 +135,11 @@ def ensure_erpnext_permissions():
 def after_migrate():
 	ensure_roles()
 	ensure_erpnext_permissions()
+	ensure_backup_settings()
+
+
+def ensure_backup_settings():
+	"""Save the backup settings' defaults once, so a timed backup includes files."""
+	from retail_management.services.backup import get_settings
+
+	get_settings()

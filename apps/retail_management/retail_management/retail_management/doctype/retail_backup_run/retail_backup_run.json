@@ -1,0 +1,46 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-11-17 20:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "kind",
+  "status",
+  "started_on",
+  "finished_on",
+  "file_name",
+  "size_mb",
+  "includes_files",
+  "on_drive",
+  "drive_file_id",
+  "note"
+ ],
+ "fields": [
+  {"fieldname": "kind", "fieldtype": "Select", "in_list_view": 1, "in_standard_filter": 1, "label": "Kind", "options": "Manual\nScheduled\nBefore restore\nRestore", "read_only": 1},
+  {"fieldname": "status", "fieldtype": "Select", "in_list_view": 1, "in_standard_filter": 1, "label": "Status", "options": "Running\nDone\nFailed", "read_only": 1},
+  {"fieldname": "started_on", "fieldtype": "Datetime", "in_list_view": 1, "label": "Started", "read_only": 1},
+  {"fieldname": "finished_on", "fieldtype": "Datetime", "label": "Finished", "read_only": 1},
+  {"fieldname": "file_name", "fieldtype": "Data", "in_list_view": 1, "label": "File", "read_only": 1},
+  {"fieldname": "size_mb", "fieldtype": "Float", "label": "Size (MB)", "precision": "1", "read_only": 1},
+  {"default": "0", "fieldname": "includes_files", "fieldtype": "Check", "label": "Includes files", "read_only": 1},
+  {"default": "0", "fieldname": "on_drive", "fieldtype": "Check", "label": "On Google Drive", "read_only": 1},
+  {"fieldname": "drive_file_id", "fieldtype": "Data", "hidden": 1, "label": "Drive File ID", "read_only": 1},
+  {"fieldname": "note", "fieldtype": "Small Text", "label": "Note", "read_only": 1}
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-11-17 20:00:00",
+ "modified_by": "Administrator",
+ "module": "Retail Management",
+ "name": "Retail Backup Run",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {"delete": 1, "read": 1, "report": 1, "role": "System Manager"}
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "file_name"
+}

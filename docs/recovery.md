@@ -11,6 +11,7 @@ before it.
 | Every owner is locked out, the server still runs | Whoever has SSH or Proxmox access | `bench set-password` on the server |
 | SSH key lost, Proxmox still works | Whoever can sign in to Proxmox | Container console from Proxmox |
 | The server or its disk is gone | Whoever holds the offsite passwords | Rebuild from the encrypted offsite copy |
+| Data entered by mistake, or a copy on your own computer | A System Manager | Desk → Retail → **Backups** (section 5) |
 
 ## 1. Owner forgot their password
 
@@ -138,3 +139,81 @@ Until this is done, the nightly job logs
    setup, backups, Cloudflare), then point the Cloudflare tunnel hostnames at
    the new server's address.
 6. Sign in and check: dashboard figures, a product, the last till session.
+
+## 5. Backups page in the desk
+
+Desk → **Retail** → **Backups** (`/desk/retail-backups`), System Managers
+only.
+
+### Export
+
+**Make a backup** writes one `.zip` that opens on any computer:
+
+| Inside | What it is |
+|---|---|
+| `manifest.json` | site, date, app versions, what is included |
+| `database.sql.gz` | the whole database: products, sales, purchases, users, settings |
+| `public-files.tgz` | product pictures, logo |
+| `private-files.tgz` | scanned delivery notes, supplier invoices and every other attachment |
+
+Download it from the list on the page. The server keeps the newest few
+(*Copies kept on this server*), in `sites/<site>/private/retail-backups`.
+
+### Import (restore)
+
+**Choose a backup file**, or **Restore** next to a backup already on the
+server. The file is sent in small pieces, so its size does not matter to the
+web server or Cloudflare, and it is checked before anything happens. Then
+type `RESTORE` to confirm.
+
+The restore runs in the background:
+
+1. A backup of the current state is made first (named
+   `...-before-restore.zip`), so a restore can be undone the same way.
+2. The database is replaced by the one in the file, and the files are put
+   back. Files added since the backup are left where they are.
+3. `bench migrate` brings the restored data up to the installed version.
+
+The page's history, the schedule and the Google Drive connection belong to
+the server and are kept. Users, passwords and recovery codes come from the
+backup, so you may have to sign in again with the password you had then.
+
+**Not in the zip:** the site's `encryption_key` (in `site_config.json`). On
+the same server that does not matter. On a brand-new server, saved passwords
+of integrations (outgoing email, Google) cannot be read without the old key:
+put the old key back first as in section 4, or type those passwords in again.
+
+### Timed backups to Google Drive
+
+One-time setup, with the Google account the backups should go to:
+
+1. [Google Cloud Console](https://console.cloud.google.com/): new project,
+   *APIs & Services → Library → Google Drive API → Enable*.
+2. *OAuth consent screen*: type *External*, add your own address as a test
+   user (or publish the app), scope `.../auth/drive.file`.
+3. *Credentials → Create credentials → OAuth client ID*, type *Web
+   application*, authorised redirect URI exactly as the Backups page shows it.
+   On production that is
+   `https://desk.nerdoz.ma/api/method/frappe.integrations.google_oauth.callback`
+   (it follows the site's `host_name`).
+4. Desk → **Google Settings**: paste the client ID and secret, tick
+   *Enable*, save.
+5. Backups page → **Connect Google Drive** → sign in → allow.
+
+The app asks only for `drive.file`: it sees the backups folder it creates
+and nothing else in that Drive. While the OAuth consent screen is in
+*Testing*, Google expires the connection after 7 days; publish the app (no
+review is needed for `drive.file`) to keep it connected.
+
+Then tick **Back up automatically**, pick every day or a day of the week and
+an hour (server time), and **Save schedule**. The scheduler checks every
+hour; if the server was off at that time the backup runs at the next check.
+Each timed backup goes to the server and to the Drive folder, older copies
+are removed beyond *Copies kept on Google Drive*. If Drive is not connected,
+timed backups stay on the server only. Fill in *Email me if a timed backup
+fails* (needs an outgoing Email Account) to hear about failures.
+
+These zips are not encrypted. Anyone who can open the Drive folder can read
+the business data and password hashes, so protect that Google account with
+two-step verification. The nightly rclone copy (section 4) stays the
+encrypted, whole-server fallback.
