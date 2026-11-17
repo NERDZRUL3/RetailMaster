@@ -184,6 +184,9 @@ const money = (amount: number) => formatMoney(amount, currency.value, locale.val
       <div>
         <h1 class="page-title">{{ t('receive.title') }}</h1>
         <p class="page-subtitle">{{ t('receive.subtitle') }}</p>
+        <RouterLink v-if="session.context?.can_buy" to="/delivery-notes/new" class="hint mt-1 inline-block font-medium text-brand-700 hover:underline">
+          {{ t('note.fromReceive') }}
+        </RouterLink>
       </div>
       <select
         v-if="shops.length > 1"

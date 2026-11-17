@@ -27,6 +27,7 @@ const ICONS: Record<string, string[]> = {
   orders: ['M3 4h2l2.4 11h10.2L20 7.5H6.2', 'M9 19.5h.01M17 19.5h.01'],
   suppliers: ['M4 19V8l8-4 8 4v11', 'M8 19v-6h8v6M8 13h8'],
   purchaseOrders: ['M7 3h7l5 5v13H7z', 'M14 3v5h5M10 13h6M10 17h6'],
+  supplierInvoices: ['M6 3h12v18l-3-2-3 2-3-2-3 2z', 'M9 8h6M9 12h6M9 16h3'],
   returns: ['M9 14 4 9l5-5', 'M4 9h10.5a5.5 5.5 0 0 1 0 11H11'],
   reports: ['M5 4h14v16H5z', 'M9 16v-4M12 16V8M15 16v-6'],
   settings: [
@@ -60,6 +61,7 @@ const menu = computed<NavItem[]>(() => {
       { to: '/orders', key: 'orders' },
       { to: '/suppliers', key: 'suppliers' },
       { to: '/purchase-orders', key: 'purchaseOrders' },
+      { to: '/supplier-invoices', key: 'supplierInvoices' },
       { to: '/returns', key: 'returns' },
       { to: '/reports', key: 'reports' },
     )

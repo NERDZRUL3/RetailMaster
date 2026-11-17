@@ -109,6 +109,21 @@ export const router = createRouter({
           meta: { homes: ['owner', 'manager'] },
         },
         {
+          path: 'supplier-invoices',
+          component: () => import('./pages/purchasing/SupplierInvoicesPage.vue'),
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'delivery-notes/new',
+          component: () => import('./pages/purchasing/DeliveryNotePage.vue'),
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'supplier-invoices/new',
+          component: () => import('./pages/purchasing/SupplierInvoicePage.vue'),
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
           path: 'returns',
           component: () => import('./pages/ComingSoonPage.vue'),
           props: { section: 'returns' },

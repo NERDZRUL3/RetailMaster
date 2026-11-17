@@ -6,7 +6,8 @@ receiving posts a submitted Purchase Receipt against it, which brings the
 stock in at the order's unit cost. Everything runs with the signed-in
 user's own permissions. Owners and managers may order and receive, managers
 only for their own shops; partners may look; cashiers have no access.
-Supplier bills (purchase invoices) and payments are not handled here yet.
+A supplier's invoice for received goods (with or without an order) posts a
+Purchase Receipt and a Purchase Invoice for it. Payments are not handled here.
 """
 
 import frappe
@@ -469,6 +470,282 @@ def receive_order(name: str, lines: list | str, reference: str = "", request_id:
 
 	run_once("po-receipt", request_id, action, lambda receipt: {"receipt": receipt})
 	return _order(name)
+
+
+# ---------------------------------------------------------------- supplier invoices
+def _invoice_doc_lines(lines) -> list[dict]:
+	lines = frappe.parse_json(lines) or []
+	if not lines:
+		frappe.throw(_("Add at least one product."))
+	if len(lines) > MAX_LINES:
+		frappe.throw(_("An invoice can have at most {0} lines.").format(MAX_LINES))
+	return lines
+
+
+def free_line(line: dict, warehouse: str) -> dict:
+	"""A product on the invoice that is not on an order."""
+	code = (line.get("item_code") or "").strip()
+	item = frappe.db.get_value(
+		"Item",
+		code,
+		["name", "item_name", "disabled", "is_purchase_item", "is_stock_item", "has_variants", "stock_uom"],
+		as_dict=True,
+	)
+	if not item:
+		frappe.throw(_("Product {0} not found.").format(code), frappe.DoesNotExistError)
+	if item.disabled or not item.is_purchase_item or not item.is_stock_item or item.has_variants:
+		frappe.throw(_("{0} cannot be bought into stock.").format(item.item_name))
+	qty = flt(line.get("qty"))
+	rate = flt(line.get("rate"))
+	if qty <= 0:
+		frappe.throw(_("Quantity must be more than zero for {0}.").format(item.item_name))
+	if rate < 0:
+		frappe.throw(_("Unit cost cannot be negative for {0}.").format(item.item_name))
+	return {
+		"item_code": item.name,
+		"qty": qty,
+		"received_qty": qty,
+		"rate": rate,
+		"uom": item.stock_uom,
+		"stock_uom": item.stock_uom,
+		"conversion_factor": 1,
+		"warehouse": warehouse,
+		# No cost known (a delivery note without prices): receive at zero rather than refuse.
+		"allow_zero_valuation_rate": 0 if rate else 1,
+	}
+
+
+def _receipt_summary(name: str) -> dict:
+	"""A delivery from a supplier: its Purchase Receipt and, if entered, the
+	supplier's invoice (Purchase Invoice) for it."""
+	pr = frappe.db.get_value(
+		"Purchase Receipt",
+		name,
+		[
+			"name",
+			"supplier",
+			"supplier_name",
+			"set_warehouse",
+			"posting_date",
+			"supplier_delivery_note",
+			"grand_total",
+			"total_qty",
+			"currency",
+			"owner",
+			"per_billed",
+		],
+		as_dict=True,
+	)
+	attachment = frappe.db.get_value(
+		"File", {"attached_to_doctype": "Purchase Receipt", "attached_to_name": name}, "name"
+	)
+	invoice = frappe.db.sql(
+		"""select distinct pi.name, pi.bill_no, pi.bill_date, pi.grand_total, pi.outstanding_amount, pi.creation
+		from `tabPurchase Invoice` pi join `tabPurchase Invoice Item` pii on pii.parent = pi.name
+		where pii.purchase_receipt = %s and pi.docstatus = 1 order by pi.creation desc limit 1""",
+		name,
+		as_dict=True,
+	)
+	invoice = invoice[0] if invoice else None
+	orders = frappe.get_all(
+		"Purchase Receipt Item", filters={"parent": name, "purchase_order": ("is", "set")}, pluck="purchase_order"
+	)
+	return {
+		"receipt": pr.name,
+		"invoice": invoice.name if invoice else None,
+		"bill_no": (invoice.bill_no if invoice else pr.supplier_delivery_note) or "",
+		"bill_date": str(invoice.bill_date) if invoice and invoice.bill_date else None,
+		"outstanding": flt(invoice.outstanding_amount) if invoice else None,
+		"supplier": pr.supplier,
+		"supplier_name": pr.supplier_name,
+		"shop_name": _shop_of(pr.set_warehouse).shop_name,
+		"date": str(pr.posting_date),
+		"total": flt(invoice.grand_total if invoice else pr.grand_total),
+		"qty": flt(pr.total_qty),
+		"currency": pr.currency,
+		"orders": sorted(set(orders)),
+		"billed": flt(pr.per_billed) >= 100,
+		"attachment": attachment,
+		"by": frappe.db.get_value("User", pr.owner, "full_name") or pr.owner,
+	}
+
+
+def receiving_target(data: dict) -> tuple:
+	"""(order or None, shop row, supplier) for a delivery into one shop, checked:
+	the shop is the user's and active, the order is open and for that shop."""
+	shop = data.get("shop") or ""
+	order_name = (data.get("order") or "").strip()
+	order = _doc_for_action(order_name, "read") if order_name else None
+	if order:
+		if order.docstatus != 1 or order.status in ("Closed", "Completed", "On Hold"):
+			frappe.throw(_("This order cannot receive goods."))
+		shop = shop or _shop_of(order.set_warehouse).name or ""
+	if not shop:
+		frappe.throw(_("Choose a shop."))
+	assert_shop_access(shop)
+	shop_row = frappe.db.get_value("Retail Shop", shop, ["name", "company", "warehouse", "enabled"], as_dict=True)
+	if not shop_row or not shop_row.warehouse or not cint(shop_row.enabled):
+		frappe.throw(_("Choose an active shop."))
+	if order and order.set_warehouse != shop_row.warehouse:
+		frappe.throw(_("This order is for another shop."))
+	supplier = (order.supplier if order else data.get("supplier")) or ""
+	if not supplier or not frappe.db.exists("Supplier", {"name": supplier, "disabled": 0}):
+		frappe.throw(_("Choose a supplier."))
+	return order, shop_row, supplier
+
+
+def post_receipt(supplier: str, shop_row, order, order_rows: dict, free_rows: list, reference: str):
+	"""Insert and submit a Purchase Receipt into the shop: order_rows {order row: qty}
+	at the order's cost, free_rows (from free_line) for products not on the order."""
+	from erpnext.buying.doctype.purchase_order.purchase_order import make_purchase_receipt
+
+	if order and order_rows:
+		receipt = make_purchase_receipt(order.name)
+		receipt.set("items", [row for row in receipt.items if row.purchase_order_item in order_rows])
+		for row in receipt.items:
+			row.qty = order_rows[row.purchase_order_item]
+			row.received_qty = row.qty
+			row.rejected_qty = 0
+			row.rejected_warehouse = None
+			row.stock_qty = row.qty * flt(row.conversion_factor or 1)
+	else:
+		receipt = frappe.new_doc("Purchase Receipt")
+		receipt.update(
+			{
+				"supplier": supplier,
+				"company": shop_row.company,
+				"set_warehouse": shop_row.warehouse,
+				"currency": frappe.get_cached_value("Company", shop_row.company, "default_currency"),
+			}
+		)
+	receipt.rejected_warehouse = None
+	for row in free_rows:
+		receipt.append("items", row)
+	receipt.supplier_delivery_note = reference
+	receipt.insert()
+	receipt.submit()
+	return receipt
+
+
+def _bill(receipt_name: str, bill_no: str, bill_date):
+	"""Submit the supplier's invoice (Purchase Invoice) for a received delivery."""
+	from erpnext.stock.doctype.purchase_receipt.purchase_receipt import make_purchase_invoice
+
+	bill = make_purchase_invoice(receipt_name)
+	bill.bill_no = bill_no
+	bill.bill_date = bill_date
+	bill.disable_rounded_total = 1  # owe exactly what the supplier's invoice says
+	bill.insert()
+	bill.submit()
+	return bill
+
+
+def _bill_fields(data: dict, supplier: str) -> tuple[str, str]:
+	bill_no = (data.get("bill_no") or "").strip()[:140]
+	if not bill_no:
+		frappe.throw(_("Enter the supplier's invoice number."))
+	bill_date = data.get("bill_date") or nowdate()
+	if getdate(bill_date) > getdate(nowdate()):
+		frappe.throw(_("The invoice date cannot be in the future."))
+	return bill_no, bill_date
+
+
+def _no_duplicate_bill(supplier: str, bill_no: str):
+	"""A supplier's invoice number is entered only once."""
+	duplicate = frappe.db.get_value("Purchase Invoice", {"supplier": supplier, "bill_no": bill_no, "docstatus": 1}, "name")
+	if duplicate:
+		frappe.throw(_("Invoice {0} of this supplier was already entered ({1}).").format(bill_no, duplicate))
+
+
+@frappe.whitelist(methods=["POST"])
+def invoice_receipt(receipt: str, bill_no: str, bill_date: str | None = None, request_id: str = "") -> dict:
+	"""Enter the supplier's invoice for a delivery already received (for example
+	from a delivery note). Stock does not change; only what is owed is recorded."""
+	_require(BUY_ROLES, "Purchase Invoice", "create")
+	doc = frappe.get_doc("Purchase Receipt", receipt)
+	doc.check_permission("read")
+	shop = _shop_of(doc.set_warehouse).name
+	if shop:
+		assert_shop_access(shop)
+	if doc.docstatus != 1 or doc.is_return:
+		frappe.throw(_("Only a received delivery can be invoiced."))
+	if flt(doc.per_billed) >= 100:
+		frappe.throw(_("This delivery is already invoiced."))
+	bill_no, bill_date = _bill_fields({"bill_no": bill_no, "bill_date": bill_date}, doc.supplier)
+
+	def action() -> str:
+		_no_duplicate_bill(doc.supplier, bill_no)
+		_bill(doc.name, bill_no, bill_date)
+		return doc.name
+
+	return run_once("receipt-invoice", request_id, action, _receipt_summary)
+
+
+@frappe.whitelist(methods=["POST"])
+def receive_invoice(invoice: dict | str, request_id: str = "") -> dict:
+	"""Enter a supplier's invoice for goods received into one shop.
+
+	invoice: {supplier, shop, bill_no, bill_date, order?, lines: [{row?, item_code?, qty, rate?}]}.
+	Lines with a row receive against that row of the order (at the order's
+	unit cost); other lines are products not on an order, at the cost given.
+	Posts a submitted Purchase Receipt (stock comes into the shop) and a
+	submitted Purchase Invoice for it (what is owed to the supplier).
+	"""
+	data = frappe.parse_json(invoice) or {}
+	_require(BUY_ROLES, "Purchase Receipt", "create")
+	_require(BUY_ROLES, "Purchase Invoice", "create")
+	order, shop_row, supplier = receiving_target(data)
+	bill_no, bill_date = _bill_fields(data, supplier)
+
+	order_rows, free_rows = {}, []
+	remaining = {row.name: flt(row.qty) - flt(row.received_qty) for row in order.items} if order else {}
+	for line in _invoice_doc_lines(data.get("lines")):
+		row = line.get("row")
+		if row:
+			if row not in remaining:
+				frappe.throw(_("This line is not on the order."))
+			qty = flt(line.get("qty"))
+			if qty < 0:
+				frappe.throw(_("Quantities cannot be negative."))
+			if qty > remaining[row] + 1e-9:
+				frappe.throw(
+					_("More than ordered was entered. Change the order first, or receive only what was ordered.")
+				)
+			if qty:
+				order_rows[row] = qty
+		else:
+			free_rows.append(free_line(line, shop_row.warehouse))
+	if not order_rows and not free_rows:
+		frappe.throw(_("Enter what was delivered."))
+
+	def action() -> str:
+		_no_duplicate_bill(supplier, bill_no)
+		receipt = post_receipt(supplier, shop_row, order, order_rows, free_rows, bill_no)
+		_bill(receipt.name, bill_no, bill_date)
+		return receipt.name
+
+	return run_once("supplier-invoice", request_id, action, _receipt_summary)
+
+
+@frappe.whitelist()
+def get_supplier_invoices(shop: str | None = None, supplier: str | None = None, limit: int = 30) -> list[dict]:
+	"""Latest deliveries received from suppliers into the user's shops, with
+	the supplier's invoice when one was entered."""
+	_require(VIEW_ROLES, "Purchase Receipt", "read")
+	warehouses = [row.warehouse for row in _shops(shop)]
+	if not warehouses:
+		return []
+	filters = {"docstatus": 1, "is_return": 0, "set_warehouse": ("in", warehouses)}
+	if supplier:
+		filters["supplier"] = supplier
+	names = frappe.get_list(
+		"Purchase Receipt",
+		filters=filters,
+		pluck="name",
+		order_by="posting_date desc, creation desc",
+		limit=min(max(cint(limit), 1), 200),
+	)
+	return [_receipt_summary(name) for name in names]
 
 
 def clear_default_rejected_warehouse(doc, method=None):

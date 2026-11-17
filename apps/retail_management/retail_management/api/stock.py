@@ -11,10 +11,10 @@ transfer). Partners may look; cashiers have no access.
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, get_datetime
+from frappe.utils import cint, escape_html, flt, get_datetime
 
 from retail_management.api.inventory import _require_inventory, _shops
-from retail_management.services.idempotency import run_once
+from retail_management.services.idempotency import previous_result, run_once
 from retail_management.services.permissions import assert_shop_access
 from retail_management.setup import ROLE_MANAGER, ROLE_OWNER
 
@@ -256,6 +256,8 @@ def get_movements(
 				"balance": flt(row.qty_after_transaction),
 				"voucher_type": row.voucher_type,
 				"voucher_no": row.voucher_no,
+				"reversible": row.voucher_type == "Stock Reconciliation"
+				or purposes.get(row.voucher_no) in REVERSIBLE_PURPOSES,
 				"by": users[row.owner],
 			}
 		)
@@ -382,9 +384,53 @@ def _count(name: str) -> dict:
 		"shop_name": shop,
 		"lines": lines,
 		"value_difference": flt(doc.difference_amount),
-		"reference": doc.get("remarks") or "",
+		"reference": doc.get("remarks") or _first_comment(doc),
 		"by": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
 	}
+
+
+def _first_comment(doc) -> str:
+	return frappe.db.get_value(
+		"Comment",
+		{"reference_doctype": doc.doctype, "reference_name": doc.name, "comment_type": "Comment"},
+		"content",
+		order_by="creation asc",
+	) or ""
+
+
+def _post_count(shop_row, changed: list[dict], remarks: str) -> str:
+	"""Submit a Stock Reconciliation setting these quantities in the shop's
+	warehouse, valued at the current cost. Returns its name."""
+	rows = []
+	for row in changed:
+		line = {"item_code": row["item_code"], "warehouse": shop_row.warehouse, "qty": row["qty"]}
+		rate = frappe.db.get_value(
+			"Bin", {"item_code": row["item_code"], "warehouse": shop_row.warehouse}, "valuation_rate"
+		) or frappe.db.get_value("Item", row["item_code"], "valuation_rate")
+		if flt(rate):
+			line["valuation_rate"] = flt(rate)
+		else:
+			line["allow_zero_valuation_rate"] = 1
+		rows.append(line)
+	doc = frappe.get_doc(
+		{
+			"doctype": "Stock Reconciliation",
+			"purpose": "Stock Reconciliation",
+			"company": shop_row.company,
+			"set_warehouse": shop_row.warehouse,
+			"items": rows,
+		}
+	)
+	remarks = (remarks or "").strip()[:500]
+	if doc.meta.has_field("remarks"):
+		doc.remarks = remarks
+	doc.insert()
+	doc.submit()
+	if remarks and not doc.meta.has_field("remarks"):
+		# Stock Reconciliation has no remarks field: keep the note as a
+		# comment on the document, where the desk shows it.
+		doc.add_comment("Comment", escape_html(remarks))
+	return doc.name
 
 
 @frappe.whitelist(methods=["POST"])
@@ -403,35 +449,14 @@ def submit_count(shop: str, lines: list | str, reference: str = "", request_id: 
 		)
 	}
 	changed = [row for row in counted if abs(row["qty"] - current.get(row["item_code"], 0)) > 1e-9]
+	if done := previous_result("count", request_id):
+		result = _count(done)
+		return {**result, "unchanged": len(counted) - len(result["lines"])}
 	if not changed:
 		return {"name": None, "lines": [], "unchanged": len(counted), "value_difference": 0}
 
 	def action() -> str:
-		rows = []
-		for row in changed:
-			line = {"item_code": row["item_code"], "warehouse": shop_row.warehouse, "qty": row["qty"]}
-			rate = frappe.db.get_value(
-				"Bin", {"item_code": row["item_code"], "warehouse": shop_row.warehouse}, "valuation_rate"
-			) or frappe.db.get_value("Item", row["item_code"], "valuation_rate")
-			if flt(rate):
-				line["valuation_rate"] = flt(rate)
-			else:
-				line["allow_zero_valuation_rate"] = 1
-			rows.append(line)
-		doc = frappe.get_doc(
-			{
-				"doctype": "Stock Reconciliation",
-				"purpose": "Stock Reconciliation",
-				"company": shop_row.company,
-				"set_warehouse": shop_row.warehouse,
-				"items": rows,
-			}
-		)
-		if doc.meta.has_field("remarks"):
-			doc.remarks = (reference or "").strip()[:500]
-		doc.insert()
-		doc.submit()
-		return doc.name
+		return _post_count(shop_row, changed, reference)
 
 	result = run_once("count", request_id, action, _count)
 	result["unchanged"] = len(counted) - len(changed)
@@ -452,3 +477,102 @@ def get_counts(shop: str | None = None, limit: int = 10) -> list[dict]:
 		limit=min(max(cint(limit), 1), 50),
 	)
 	return [_count(name) for name in names]
+
+
+# ---------------------------------------------------------------- corrections
+# Wrong stock is fixed with ordinary ERPNext documents, never by editing the
+# ledger: either set the right quantity (a one-line Stock Reconciliation whose
+# remarks carry the reason) or cancel the wrong Stock Entry / Stock
+# Reconciliation (ERPNext then posts the reversing ledger rows). The reason is
+# kept on the document, so the desk shows who corrected what and why.
+REVERSIBLE_PURPOSES = frozenset({"Material Receipt", "Material Issue", "Material Transfer"})
+REVERSIBLE_TYPES = ("Stock Entry", "Stock Reconciliation")
+
+
+def _reason(reason: str) -> str:
+	reason = (reason or "").strip()
+	if len(reason) < 3:
+		frappe.throw(_("Say why the stock is being corrected."))
+	return reason[:500]
+
+
+@frappe.whitelist(methods=["POST"])
+def correct_stock(shop: str, item_code: str, qty: float, reason: str, request_id: str = "") -> dict:
+	"""Set one product's quantity in a shop to what is really there. Posts a
+	Stock Reconciliation for the difference, with the reason as its remarks."""
+	_require_stock("Stock Reconciliation")
+	reason = _reason(reason)
+	shop_row = _shop_row(shop)
+	line = _items([{"item_code": item_code, "qty": qty}], allow_zero=True)[0]
+	if done := previous_result("correct", request_id):
+		return _count(done)
+	before = flt(frappe.db.get_value("Bin", {"item_code": line["item_code"], "warehouse": shop_row.warehouse}, "actual_qty"))
+	if abs(line["qty"] - before) <= 1e-9:
+		return {"name": None, "lines": [], "unchanged": 1, "value_difference": 0}
+	return run_once(
+		"correct", request_id, lambda: _post_count(shop_row, [line], _("Correction: {0}").format(reason)), _count
+	)
+
+
+def _voucher(voucher_type: str, voucher_no: str):
+	"""The submitted document behind a movement, if this app may cancel it:
+	a stock entry (receipt, issue, transfer) or a stock count, touching only
+	the user's own shops."""
+	if voucher_type not in REVERSIBLE_TYPES:
+		frappe.throw(_("Only stock entries and stock counts can be cancelled here."))
+	_require_stock(voucher_type)
+	if not frappe.db.exists(voucher_type, voucher_no):
+		frappe.throw(_("{0} {1} not found.").format(_(voucher_type), voucher_no), frappe.DoesNotExistError)
+	doc = frappe.get_doc(voucher_type, voucher_no)
+	if doc.docstatus != 1:
+		frappe.throw(_("{0} is not an active stock document.").format(voucher_no))
+	if voucher_type == "Stock Entry" and doc.purpose not in REVERSIBLE_PURPOSES:
+		frappe.throw(_("This kind of stock entry cannot be cancelled here."))
+	warehouses = set()
+	for row in doc.items:
+		warehouses.update(w for w in (row.get("s_warehouse"), row.get("t_warehouse"), row.get("warehouse")) if w)
+	mine = {row.warehouse for row in _shops()}
+	if not warehouses or not warehouses <= mine:
+		frappe.throw(_("This document moves stock in a shop you do not manage."), frappe.PermissionError)
+	frappe.has_permission(voucher_type, "cancel", doc=doc, throw=True)
+	return doc
+
+
+def _voucher_summary(doc) -> dict:
+	shop = lambda warehouse: frappe.db.get_value("Retail Shop", {"warehouse": warehouse}, "shop_name") or warehouse  # noqa: E731
+	lines = []
+	for row in doc.items:
+		if doc.doctype == "Stock Reconciliation":
+			change = flt(row.qty) - flt(row.current_qty)
+			where = shop(row.warehouse)
+		else:
+			change = flt(row.transfer_qty or row.qty)
+			where = " → ".join(shop(w) for w in (row.s_warehouse, row.t_warehouse) if w)
+			if row.s_warehouse and not row.t_warehouse:
+				change = -change
+		lines.append({"item_code": row.item_code, "item_name": row.item_name, "shop_name": where, "qty": change})
+	return {
+		"voucher_type": doc.doctype,
+		"voucher_no": doc.name,
+		"posted": _iso(doc.posting_date, doc.posting_time),
+		"cancelled": doc.docstatus == 2,
+		"lines": lines,
+		"by": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
+	}
+
+
+@frappe.whitelist()
+def get_reversal(voucher_type: str, voucher_no: str) -> dict:
+	"""What cancelling this document would undo (every line, not just one product)."""
+	return _voucher_summary(_voucher(voucher_type, voucher_no))
+
+
+@frappe.whitelist(methods=["POST"])
+def reverse_movement(voucher_type: str, voucher_no: str, reason: str) -> dict:
+	"""Undo a wrong stock entry or count by cancelling its document. ERPNext
+	posts the reversing ledger rows; the reason is added as a comment."""
+	reason = _reason(reason)
+	doc = _voucher(voucher_type, voucher_no)
+	doc.add_comment("Comment", _("Cancelled from the retail interface. Reason: {0}").format(escape_html(reason)))
+	doc.cancel()
+	return _voucher_summary(doc)

@@ -58,9 +58,19 @@ _PURCHASING = {
 	"Contact": "r",
 	"Purchase Order": "rwcdsx",
 	"Purchase Receipt": "rwcs",
+	# The supplier's invoice for goods received (api/purchasing.receive_invoice).
+	"Purchase Invoice": "rwcs",
 	"Account": "r",
 }
-_PURCHASING_READ = {"Supplier": "r", "Purchase Order": "r", "Purchase Receipt": "r", "Stock Reconciliation": "r"}
+# Stock corrections (api/stock.py): cancelling a wrong stock entry or count.
+_CORRECTIONS = {"Stock Entry": "x", "Stock Reconciliation": "x"}
+_PURCHASING_READ = {
+	"Supplier": "r",
+	"Purchase Order": "r",
+	"Purchase Receipt": "r",
+	"Purchase Invoice": "r",
+	"Stock Reconciliation": "r",
+}
 
 
 def _merge(*groups: dict) -> dict:
@@ -74,12 +84,14 @@ def _merge(*groups: dict) -> dict:
 
 ERPNEXT_PERMISSIONS = {
 	ROLE_OWNER: _merge(
-		_CATALOGUE_AND_STOCK, _RECEIVING, _CATEGORIES, _SELLING, _STOCK_OPS, _PURCHASING, {"Brand": "rwc"}
+		_CATALOGUE_AND_STOCK, _RECEIVING, _CATEGORIES, _SELLING, _STOCK_OPS, _CORRECTIONS, _PURCHASING, {"Brand": "rwc"}
 	),
 	ROLE_PARTNER: _merge(
 		_CATALOGUE_AND_STOCK, _SALES_REPORTING, _PURCHASING_READ, {"Stock Entry": "r", "Brand": "rwc"}
 	),
-	ROLE_MANAGER: _merge(_CATALOGUE_AND_STOCK, _RECEIVING, _CATEGORIES, _SELLING, _STOCK_OPS, _PURCHASING),
+	ROLE_MANAGER: _merge(
+		_CATALOGUE_AND_STOCK, _RECEIVING, _CATEGORIES, _SELLING, _STOCK_OPS, _CORRECTIONS, _PURCHASING
+	),
 	ROLE_CASHIER: _merge(_SELLING),
 }
 _FLAG_TO_PTYPE = {

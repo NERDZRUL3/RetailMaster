@@ -6,11 +6,21 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api'
+import AppDialog from '@/components/AppDialog.vue'
 import ProductPicker from '@/components/ProductPicker.vue'
 import { formatMoney, formatQty, type Product } from '@/inventory'
 import { newRequestId } from '@/receiving'
 import { session } from '@/session'
-import { type Count, type Movement, type QtyLine, stockApi, type StockList, type Transfer } from '@/stock'
+import {
+  type Count,
+  type Movement,
+  type QtyLine,
+  type Reversal,
+  stockApi,
+  type StockList,
+  type StockRow,
+  type Transfer,
+} from '@/stock'
 
 type Tab = 'stock' | 'movements' | 'transfer' | 'count'
 const TABS: Tab[] = ['stock', 'movements', 'transfer', 'count']
@@ -208,11 +218,86 @@ async function submitCount() {
   }
 }
 
+// ---- Corrections: set the real quantity, or undo a wrong movement --------
+const notice = ref('')
+const MIN_REASON = 3
+const fixing = ref<StockRow | null>(null)
+const fixQty = ref<number | ''>('')
+const fixReason = ref('')
+let fixRequest = newRequestId()
+const fixValid = computed(() => fixQty.value !== '' && Number(fixQty.value) >= 0 && fixReason.value.trim().length >= MIN_REASON)
+function openFix(row: StockRow) {
+  fixing.value = row
+  fixQty.value = row.qty
+  fixReason.value = ''
+  fixRequest = newRequestId()
+  notice.value = ''
+}
+async function submitFix() {
+  const row = fixing.value
+  if (!row || !fixValid.value || busy.value) return
+  busy.value = true
+  error.value = ''
+  try {
+    const result = await stockApi.correct(row.shop, row.item_code, Number(fixQty.value), fixReason.value.trim(), fixRequest)
+    const line = result.lines[0]
+    notice.value =
+      result.name && line
+        ? t('stock.correctDone', { before: qty(line.before), after: qty(line.counted), name: result.name })
+        : t('stock.correctNoChange')
+    fixing.value = null
+    moves.value = [] // reload the movements next time they are shown
+    await loadStock()
+  } catch (err) {
+    fixing.value = null
+    fail(err)
+  } finally {
+    busy.value = false
+  }
+}
+
+const undoing = ref<Movement | null>(null)
+const undoPreview = ref<Reversal | null>(null)
+const undoReason = ref('')
+const undoValid = computed(() => !!undoPreview.value && undoReason.value.trim().length >= MIN_REASON)
+async function openUndo(m: Movement) {
+  undoing.value = m
+  undoPreview.value = null
+  undoReason.value = ''
+  notice.value = ''
+  error.value = ''
+  try {
+    undoPreview.value = await stockApi.reversal(m.voucher_type, m.voucher_no)
+  } catch (err) {
+    undoing.value = null
+    fail(err)
+  }
+}
+async function submitUndo() {
+  const m = undoing.value
+  if (!m || !undoValid.value || busy.value) return
+  busy.value = true
+  error.value = ''
+  try {
+    const result = await stockApi.reverse(m.voucher_type, m.voucher_no, undoReason.value.trim())
+    undoing.value = null
+    await loadMoves()
+    notice.value = t('stock.undoDone', { name: result.voucher_no })
+    loadStock()
+  } catch (err) {
+    undoing.value = null
+    error.value = `${err instanceof ApiError ? err.message : String(err)} ${t('stock.undoFailed')}`
+  } finally {
+    busy.value = false
+  }
+}
+
 watch(
   tab,
   (value) => {
     error.value = ''
     done.value = ''
+    notice.value = ''
     if (value === 'movements' && !moves.value.length) loadMoves()
     if (value === 'transfer') loadTransfers()
     if (value === 'count') loadCounts()
@@ -245,6 +330,7 @@ onMounted(loadStock) // stock tab, and the currency for every tab
     </div>
 
     <p v-if="error" class="notice-error mt-6" role="alert">{{ error }}</p>
+    <p v-if="notice" class="notice-ok mt-6" role="status">{{ notice }}</p>
 
     <!-- Stock on hand -->
     <section v-if="tab === 'stock'" class="mt-6">
@@ -314,7 +400,8 @@ onMounted(loadStock) // stock tab, and the currency for every tab
               </td>
               <td class="px-4 py-3 text-end text-slate-600 tabular-nums">{{ money(row.rate) }}</td>
               <td class="px-4 py-3 text-end font-medium text-slate-900 tabular-nums">{{ money(row.value) }}</td>
-              <td class="px-4 py-3 text-end">
+              <td class="px-4 py-3 text-end whitespace-nowrap">
+                <button v-if="canChange" type="button" class="btn-quiet px-2.5 py-1 text-[13px]" @click="openFix(row)">{{ t('stock.correct') }}</button>
                 <button type="button" class="btn-quiet px-2.5 py-1 text-[13px]" @click="showMovesOf(row.item_code)">{{ t('stock.history') }}</button>
               </td>
             </tr>
@@ -351,6 +438,7 @@ onMounted(loadStock) // stock tab, and the currency for every tab
               <th class="px-4 py-3 text-start font-medium">{{ t('stock.col.what') }}</th>
               <th class="px-4 py-3 text-end font-medium">{{ t('stock.col.change') }}</th>
               <th class="px-4 py-3 text-end font-medium">{{ t('stock.col.after') }}</th>
+              <th v-if="canChange" class="px-4 py-3"><span class="sr-only">{{ t('stock.undo') }}</span></th>
             </tr>
           </thead>
           <tbody>
@@ -366,6 +454,9 @@ onMounted(loadStock) // stock tab, and the currency for every tab
               </td>
               <td class="px-4 py-3 text-end font-semibold tabular-nums" :class="m.qty < 0 ? 'text-red-600' : 'text-green-700'">{{ signed(m.qty) }}</td>
               <td class="px-4 py-3 text-end text-slate-600 tabular-nums">{{ qty(m.balance) }}</td>
+              <td v-if="canChange" class="px-4 py-3 text-end">
+                <button v-if="m.reversible" type="button" class="btn-quiet px-2.5 py-1 text-[13px]" @click="openUndo(m)">{{ t('stock.undo') }}</button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -499,5 +590,52 @@ onMounted(loadStock) // stock tab, and the currency for every tab
         </ul>
       </div>
     </section>
+
+    <AppDialog v-if="fixing" :title="t('stock.correctTitle')" @close="fixing = null">
+      <form class="space-y-4" @submit.prevent="submitFix">
+        <div>
+          <p class="font-medium text-slate-900" dir="auto">{{ fixing.item_name }}</p>
+          <p class="text-[13px] text-slate-500">{{ fixing.shop_name }} · {{ t('stock.onRecordNow', { qty: qty(fixing.qty) }) }}</p>
+        </div>
+        <p class="hint">{{ t('stock.correctHint') }}</p>
+        <div>
+          <label class="label" for="fix-qty">{{ t('stock.realQty') }}</label>
+          <input id="fix-qty" v-model.number="fixQty" type="number" min="0" step="any" autofocus class="field text-[15px] tabular-nums" />
+          <p
+            v-if="fixQty !== '' && Number(fixQty) !== fixing.qty"
+            class="mt-1 text-[13px] font-semibold tabular-nums"
+            :class="Number(fixQty) < fixing.qty ? 'text-red-600' : 'text-green-700'"
+          >
+            {{ signed(Number(fixQty) - fixing.qty) }}
+          </p>
+        </div>
+        <div>
+          <label class="label" for="fix-reason">{{ t('stock.reasonRequired') }}</label>
+          <input id="fix-reason" v-model="fixReason" required maxlength="140" class="field text-[15px]" :placeholder="t('stock.correctReasonPlaceholder')" />
+        </div>
+        <button type="submit" class="btn-primary w-full" :disabled="!fixValid || busy">{{ busy ? t('pos.saving') : t('stock.correctSubmit') }}</button>
+      </form>
+    </AppDialog>
+
+    <AppDialog v-if="undoing" :title="t('stock.undoTitle')" @close="undoing = null">
+      <form class="space-y-4" @submit.prevent="submitUndo">
+        <div v-if="!undoPreview" class="skeleton h-16 rounded-lg" aria-hidden="true"></div>
+        <template v-else>
+          <p class="text-[14px] text-slate-700">{{ t('stock.undoHint', { name: undoPreview.voucher_no }) }}</p>
+          <ul class="space-y-1 text-[14px]">
+            <li v-for="(l, i) in undoPreview.lines" :key="i" class="flex gap-3">
+              <span class="min-w-0 flex-1 truncate" dir="auto">{{ l.item_name }} <span class="text-slate-500">· {{ l.shop_name }}</span></span>
+              <span class="font-semibold tabular-nums" :class="l.qty < 0 ? 'text-red-600' : 'text-green-700'">{{ signed(l.qty) }}</span>
+            </li>
+          </ul>
+          <p class="text-[12px] text-slate-500">{{ when(undoPreview.posted) }} · {{ undoPreview.by }}</p>
+        </template>
+        <div>
+          <label class="label" for="undo-reason">{{ t('stock.reasonRequired') }}</label>
+          <input id="undo-reason" v-model="undoReason" required maxlength="140" autofocus class="field text-[15px]" :placeholder="t('stock.undoReasonPlaceholder')" />
+        </div>
+        <button type="submit" class="btn-danger w-full" :disabled="!undoValid || busy">{{ busy ? t('pos.saving') : t('stock.undoSubmit') }}</button>
+      </form>
+    </AppDialog>
   </div>
 </template>

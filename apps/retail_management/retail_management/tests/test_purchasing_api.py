@@ -133,6 +133,83 @@ class TestPurchasingApi(IntegrationTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			purchasing.receive_order(partly["name"], [{"row": partly["lines"][0]["row"], "qty": 1}])
 
+	def invoice(self, lines, order="", shop=SHOP_A, bill_no=None, request_id="") -> dict:
+		return purchasing.receive_invoice(
+			{
+				"supplier": self.supplier,
+				"shop": shop,
+				"order": order,
+				"bill_no": bill_no or f"F-{frappe.generate_hash(length=8)}",
+				"bill_date": add_days(nowdate(), -1),
+				"lines": lines,
+			},
+			request_id=request_id,
+		)
+
+	def test_invoice_without_order(self):
+		self.as_user(self.manager)
+		before = self.qty()
+		bill_no = f"INV-{frappe.generate_hash(length=8)}"
+		request = frappe.generate_hash(length=12)
+		first = self.invoice([{"item_code": ITEM, "qty": 5, "rate": 8}], bill_no=bill_no, request_id=request)
+		again = self.invoice([{"item_code": ITEM, "qty": 5, "rate": 8}], bill_no=bill_no, request_id=request)
+		self.assertEqual(first["receipt"], again["receipt"])  # same request: received once
+		self.assertEqual(self.qty(), before + 5)
+		self.assertEqual((first["bill_no"], first["total"], first["shop_name"]), (bill_no, 40, SHOP_A))
+		frappe.set_user("Administrator")
+		receipt = frappe.get_doc("Purchase Receipt", first["receipt"])
+		self.assertEqual((receipt.docstatus, receipt.set_warehouse), (1, self.wh_a))
+		bill = frappe.get_doc("Purchase Invoice", first["invoice"])
+		self.assertEqual((bill.docstatus, bill.bill_no, str(bill.bill_date)), (1, bill_no, add_days(nowdate(), -1)))
+		self.assertEqual(bill.items[0].purchase_receipt, receipt.name)
+		self.assertTrue(
+			frappe.db.exists(
+				"Stock Ledger Entry",
+				{"voucher_type": "Purchase Receipt", "voucher_no": receipt.name, "warehouse": self.wh_a, "is_cancelled": 0},
+			)
+		)
+		self.as_user(self.manager)
+		with self.assertRaises(frappe.ValidationError):  # same supplier invoice entered twice
+			self.invoice([{"item_code": ITEM, "qty": 1, "rate": 8}], bill_no=bill_no)
+		self.assertIn(first["receipt"], [r["receipt"] for r in purchasing.get_supplier_invoices()])
+
+	def test_invoice_against_order(self):
+		self.as_user(self.owner)
+		placed = self.order(qty=10, rate=12.5)
+		row = placed["lines"][0]["row"]
+		before = self.qty()
+		with self.assertRaises(frappe.ValidationError):  # more than ordered
+			self.invoice([{"row": row, "qty": 11}], order=placed["name"])
+		received = self.invoice(
+			[{"row": row, "qty": 6}, {"item_code": ITEM, "qty": 2, "rate": 3.3}], order=placed["name"]
+		)
+		self.assertEqual(received["orders"], [placed["name"]])
+		self.assertEqual(received["total"], 6 * 12.5 + 2 * 3.3)
+		self.assertEqual(received["outstanding"], 6 * 12.5 + 2 * 3.3)  # not rounded to 82
+		self.assertEqual(self.qty(), before + 8)
+		order = purchasing.get_order(placed["name"])
+		self.assertEqual((order["status"], order["lines"][0]["remaining"]), ("partly_received", 4))
+		with self.assertRaises(frappe.ValidationError):  # order of another shop
+			self.invoice([{"row": row, "qty": 1}], order=placed["name"], shop=SHOP_B)
+
+	def test_invoice_scoping(self):
+		self.as_user(self.manager)
+		with self.assertRaises(frappe.PermissionError):
+			self.invoice([{"item_code": ITEM, "qty": 1, "rate": 1}], shop=SHOP_B)
+		self.as_user(self.owner)
+		other = self.invoice([{"item_code": ITEM, "qty": 1, "rate": 1}], shop=SHOP_B)
+		self.as_user(self.manager)
+		self.assertNotIn(other["receipt"], [r["receipt"] for r in purchasing.get_supplier_invoices()])
+		self.as_user(self.partner)
+		self.assertIn(other["receipt"], [r["receipt"] for r in purchasing.get_supplier_invoices()])
+		with self.assertRaises(frappe.PermissionError):
+			self.invoice([{"item_code": ITEM, "qty": 1, "rate": 1}])
+		self.as_user(self.cashier)
+		with self.assertRaises(frappe.PermissionError):
+			self.invoice([{"item_code": ITEM, "qty": 1, "rate": 1}])
+		with self.assertRaises(frappe.PermissionError):
+			purchasing.get_supplier_invoices()
+
 	def test_scoping(self):
 		self.as_user(self.manager)
 		with self.assertRaises(frappe.PermissionError):

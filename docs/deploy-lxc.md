@@ -17,7 +17,8 @@ workers under supervisor, nginx in front. Tested on a Proxmox LXC
 sudo apt-get update
 sudo apt-get install -y git curl rsync ca-certificates build-essential pkg-config \
   mariadb-server mariadb-client libmariadb-dev redis-server nginx supervisor \
-  cron xvfb libfontconfig1 fontconfig locales gnupg ansible-core fail2ban
+  cron xvfb libfontconfig1 fontconfig locales gnupg ansible-core fail2ban \
+  tesseract-ocr tesseract-ocr-eng tesseract-ocr-fra tesseract-ocr-ara
 curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
 sudo apt-get install -y nodejs && sudo npm install -g yarn
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -31,6 +32,16 @@ sudo timedatectl set-timezone Africa/Casablanca   # the customer's time zone
 Frappe 16 needs Python 3.14 and Node 24 (Debian ships older ones).
 `ansible-core` and `fail2ban` are installed from Debian because
 `bench setup production` otherwise tries to pip-install ansible and fails.
+Tesseract reads scanned supplier delivery notes (Supplier invoices → Read a
+delivery note). Without it, PDFs that contain text still work and scans get a
+clear message. On a server set up before this was added, run once:
+
+```bash
+sudo apt-get install -y tesseract-ocr tesseract-ocr-eng tesseract-ocr-fra tesseract-ocr-ara
+tesseract --list-langs   # eng, fra, ara
+```
+
+No restart is needed: the app calls the `tesseract` program for each scan.
 
 ## 2. MariaDB
 

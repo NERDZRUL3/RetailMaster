@@ -126,3 +126,62 @@ class TestStockApi(IntegrationTestCase):
 		self.assertEqual(next(m for m in moves if m["voucher_no"] == count["name"])["qty"], -2)
 		with self.assertRaises(frappe.PermissionError):
 			stock.submit_count(SHOP_B, [{"item_code": ITEM, "qty": 1}])
+
+	def test_correct_stock_sets_quantity_with_reason(self):
+		self.as_user(self.manager)
+		before = self.qty(self.wh_a)
+		with self.assertRaises(frappe.ValidationError):
+			stock.correct_stock(SHOP_A, ITEM, before + 5, "")  # a reason is required
+		unchanged = stock.correct_stock(SHOP_A, ITEM, before, "Checked shelf")
+		self.assertIsNone(unchanged["name"])
+		request = frappe.generate_hash(length=10)
+		fixed = stock.correct_stock(SHOP_A, ITEM, before + 5, "Typed 5 too few", request)
+		again = stock.correct_stock(SHOP_A, ITEM, before + 5, "Typed 5 too few", request)
+		self.assertEqual(fixed["name"], again["name"])
+		self.assertEqual(self.qty(self.wh_a), before + 5)
+		self.assertEqual(fixed["lines"][0]["difference"], 5)
+		self.assertIn("Typed 5 too few", fixed["reference"])
+		with self.assertRaises(frappe.PermissionError):
+			stock.correct_stock(SHOP_B, ITEM, 1, "Not my shop")
+		self.as_user(self.partner)
+		with self.assertRaises(frappe.PermissionError):
+			stock.correct_stock(SHOP_A, ITEM, 1, "Partners only look")
+
+	def test_reverse_wrong_receipt(self):
+		before = self.qty(self.wh_b)
+		name = receive_item(ITEM, self.wh_b, self.company, 7)
+		self.assertEqual(self.qty(self.wh_b), before + 7)
+		moves = stock.get_movements(shop=SHOP_B, item_code=ITEM)["rows"]
+		self.assertTrue(next(m for m in moves if m["voucher_no"] == name)["reversible"])
+
+		self.as_user(self.manager)  # only manages shop A
+		with self.assertRaises(frappe.PermissionError):
+			stock.reverse_movement("Stock Entry", name, "Not my shop")
+		self.as_user(self.owner)
+		preview = stock.get_reversal("Stock Entry", name)
+		self.assertEqual(preview["lines"][0]["qty"], 7)
+		with self.assertRaises(frappe.ValidationError):
+			stock.reverse_movement("Stock Entry", name, " ")
+		result = stock.reverse_movement("Stock Entry", name, "Received twice by mistake")
+		self.assertTrue(result["cancelled"])
+		self.assertEqual(frappe.db.get_value("Stock Entry", name, "docstatus"), 2)
+		self.assertEqual(self.qty(self.wh_b), before)
+		self.assertTrue(
+			frappe.db.exists(
+				"Comment",
+				{"reference_doctype": "Stock Entry", "reference_name": name, "content": ("like", "%Received twice%")},
+			)
+		)
+		self.assertNotIn(name, [m["voucher_no"] for m in stock.get_movements(shop=SHOP_B, item_code=ITEM)["rows"]])
+		with self.assertRaises(frappe.ValidationError):
+			stock.reverse_movement("Stock Entry", name, "Twice")  # already cancelled
+
+	def test_reverse_wrong_count(self):
+		self.as_user(self.manager)
+		before = self.qty(self.wh_a)
+		count = stock.submit_count(SHOP_A, [{"item_code": ITEM, "qty": before + 100}], "Typo")
+		self.assertEqual(self.qty(self.wh_a), before + 100)
+		stock.reverse_movement("Stock Reconciliation", count["name"], "Typed 100 extra")
+		self.assertEqual(self.qty(self.wh_a), before)
+		with self.assertRaises(frappe.ValidationError):
+			stock.reverse_movement("Sales Invoice", "ANY", "Not a stock document")

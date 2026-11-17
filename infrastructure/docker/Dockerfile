@@ -5,6 +5,14 @@
 ARG ERPNEXT_VERSION=v16.55.0
 FROM frappe/erpnext:${ERPNEXT_VERSION}
 
+# Tesseract reads scanned delivery notes (api/delivery_notes.py).
+USER root
+RUN apt-get update \
+	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+		tesseract-ocr tesseract-ocr-eng tesseract-ocr-fra tesseract-ocr-ara \
+	&& rm -rf /var/lib/apt/lists/*
+USER frappe
+
 COPY --chown=frappe:frappe apps/retail_management /home/frappe/frappe-bench/apps/retail_management
 
 RUN cd /home/frappe/frappe-bench \

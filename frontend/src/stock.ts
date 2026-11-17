@@ -36,6 +36,17 @@ export interface Movement {
   balance: number
   voucher_type: string
   voucher_no: string
+  /** a stock entry or count that an owner or manager may cancel */
+  reversible: boolean
+  by: string
+}
+
+export interface Reversal {
+  voucher_type: string
+  voucher_no: string
+  posted: string
+  cancelled: boolean
+  lines: { item_code: string; item_name: string; shop_name: string; qty: number }[]
   by: string
 }
 
@@ -96,5 +107,11 @@ export const stockApi = {
       request_id: requestId,
       lines: lines.map((l) => ({ item_code: l.item_code, qty: Number(l.qty) })),
     }),
+  correct: (shop: string, itemCode: string, qty: number, reason: string, requestId: string) =>
+    api.post<Count>(`${API}.correct_stock`, { shop, item_code: itemCode, qty, reason, request_id: requestId }),
+  reversal: (voucherType: string, voucherNo: string) =>
+    api.get<Reversal>(`${API}.get_reversal`, { voucher_type: voucherType, voucher_no: voucherNo }),
+  reverse: (voucherType: string, voucherNo: string, reason: string) =>
+    api.post<Reversal>(`${API}.reverse_movement`, { voucher_type: voucherType, voucher_no: voucherNo, reason }),
   counts: (shop: string) => api.get<Count[]>(`${API}.get_counts`, { shop, limit: '8' }),
 }

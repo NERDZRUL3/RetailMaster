@@ -199,7 +199,8 @@ const supplierRow = computed(() => suppliers.value.find((s) => s.name === order.
         </p>
       </div>
       <div v-if="order && !editing" class="flex flex-wrap gap-2">
-        <button v-if="canReceive" type="button" class="btn-primary" @click="receiving = !receiving">{{ t('po.receive') }}</button>
+        <RouterLink v-if="canReceive" :to="{ path: '/supplier-invoices/new', query: { order: order.name } }" class="btn-primary">{{ t('bill.enterForOrder') }}</RouterLink>
+        <button v-if="canReceive" type="button" class="btn-secondary" @click="receiving = !receiving">{{ t('po.receive') }}</button>
         <button type="button" class="btn-secondary" @click="print">{{ t('po.print') }}</button>
         <button v-if="canBuy && order.status === 'ordered'" type="button" class="btn-quiet text-red-600" :disabled="busy" @click="act('cancel')">{{ t('po.cancel') }}</button>
         <button v-if="canBuy && order.status === 'partly_received'" type="button" class="btn-quiet" :disabled="busy" @click="act('close')">{{ t('po.close') }}</button>

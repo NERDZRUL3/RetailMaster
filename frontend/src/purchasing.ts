@@ -79,7 +79,69 @@ export interface OrderDraft {
   lines: OrderLine[]
 }
 
+/** A delivery from a supplier (Purchase Receipt) with its invoice, if entered. */
+export interface SupplierInvoice {
+  receipt: string
+  invoice: string | null
+  bill_no: string
+  bill_date: string | null
+  outstanding: number | null
+  supplier: string
+  supplier_name: string
+  shop_name: string
+  date: string
+  total: number
+  qty: number
+  currency: string
+  orders: string[]
+  /** the supplier's invoice is entered for all of it */
+  billed: boolean
+  /** a delivery note file is attached */
+  attachment: string | null
+  by: string
+}
+
+/** A line of a supplier invoice: a row of the order (row set) or any product. */
+export interface InvoiceLine {
+  row?: string
+  item_code: string
+  item_name: string
+  qty: number | ''
+  rate: number | ''
+  /** for order rows: quantity still expected */
+  remaining?: number
+}
+
+export interface InvoiceDraft {
+  supplier: string
+  shop: string
+  order: string
+  bill_no: string
+  bill_date: string
+  lines: InvoiceLine[]
+}
+
 export const purchasingApi = {
+  invoices: (shop: string) => api.get<SupplierInvoice[]>(`${API}.get_supplier_invoices`, { shop }),
+  invoiceReceipt: (receipt: string, billNo: string, billDate: string, requestId: string) =>
+    api.post<SupplierInvoice>(`${API}.invoice_receipt`, {
+      receipt,
+      bill_no: billNo,
+      bill_date: billDate,
+      request_id: requestId,
+    }),
+  enterInvoice: (draft: InvoiceDraft, requestId: string) =>
+    api.post<SupplierInvoice>(`${API}.receive_invoice`, {
+      invoice: {
+        ...draft,
+        lines: draft.lines
+          .filter((l) => Number(l.qty) > 0)
+          .map((l) =>
+            l.row ? { row: l.row, qty: Number(l.qty) } : { item_code: l.item_code, qty: Number(l.qty), rate: Number(l.rate) || 0 },
+          ),
+      },
+      request_id: requestId,
+    }),
   suppliers: (query = '') => api.get<Supplier[]>(`${API}.get_suppliers`, { query }),
   saveSupplier: (supplier: Partial<Supplier>) => api.post<Supplier>(`${API}.save_supplier`, { supplier }),
   orders: (shop: string, status: string, query: string) => api.get<OrderRow[]>(`${API}.get_orders`, { shop, status, query }),
