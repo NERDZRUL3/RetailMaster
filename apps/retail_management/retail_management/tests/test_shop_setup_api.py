@@ -10,6 +10,7 @@ from retail_management.tests.test_shop_permissions import make_user
 from retail_management.tests.test_shop_stock_scoping import get_company
 
 NEW_SHOP = "_RM Setup Shop"
+RENAMED = "_RM Setup Shop Renamed"
 
 
 def remove_shop(name: str):
@@ -32,6 +33,7 @@ class TestShopSetupApi(IntegrationTestCase):
 	def setUp(self):
 		frappe.set_user("Administrator")
 		remove_shop(NEW_SHOP)
+		remove_shop(RENAMED)
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
@@ -66,6 +68,39 @@ class TestShopSetupApi(IntegrationTestCase):
 		self.assertEqual(shops.set_shop_enabled(NEW_SHOP, 0).enabled, 0)
 		self.assertEqual(shops.set_shop_enabled(NEW_SHOP, "1").enabled, 1)
 
+	def test_owner_renames_a_shop_and_staff_access_follows(self):
+		frappe.set_user(self.owner)
+		shops.create_shop(NEW_SHOP, self.company)
+		frappe.set_user("Administrator")
+		frappe.get_doc({"doctype": "Retail Shop Access", "user": self.cashier, "retail_shop": NEW_SHOP}).insert(
+			ignore_permissions=True
+		)
+		frappe.set_user(self.owner)
+		try:
+			renamed = shops.rename_shop(NEW_SHOP, f"  {RENAMED} ")
+			self.assertEqual(renamed.name, RENAMED)
+			self.assertEqual(renamed.shop_name, RENAMED)
+			self.assertFalse(frappe.db.exists("Retail Shop", NEW_SHOP))
+			self.assertEqual(
+				frappe.get_all("Retail Shop Access", {"user": self.cashier}, pluck="retail_shop"), [RENAMED]
+			)
+			self.assertEqual(frappe.session.user, self.owner)
+		finally:
+			frappe.set_user("Administrator")
+			frappe.db.delete("Retail Shop Access", {"user": self.cashier})
+			remove_shop(RENAMED)
+
+	def test_rename_to_an_existing_shop_is_refused(self):
+		frappe.set_user(self.owner)
+		shops.create_shop(NEW_SHOP, self.company)
+		shops.create_shop(RENAMED, self.company)
+		try:
+			with self.assertRaises(frappe.ValidationError):
+				shops.rename_shop(NEW_SHOP, RENAMED)
+		finally:
+			frappe.set_user("Administrator")
+			remove_shop(RENAMED)
+
 	def test_cashier_cannot_set_up_shops(self):
 		frappe.set_user(self.cashier)
 		with self.assertRaises(frappe.PermissionError):
@@ -74,3 +109,5 @@ class TestShopSetupApi(IntegrationTestCase):
 			shops.create_shop(NEW_SHOP, self.company)
 		with self.assertRaises(frappe.PermissionError):
 			shops.set_shop_enabled(NEW_SHOP, 0)
+		with self.assertRaises(frappe.PermissionError):
+			shops.rename_shop(NEW_SHOP, RENAMED)

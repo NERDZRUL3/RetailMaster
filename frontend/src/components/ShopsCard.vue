@@ -47,6 +47,36 @@ async function add() {
   }
 }
 
+// Renaming one shop at a time, in place.
+const renaming = ref<string | null>(null)
+const renameTo = ref('')
+function startRename(shop: ShopRow) {
+  renaming.value = shop.name
+  renameTo.value = shop.shop_name
+  error.value = info.value = ''
+}
+async function saveRename(shop: ShopRow) {
+  const next = renameTo.value.trim()
+  if (!next || busy.value) return
+  if (next === shop.shop_name) {
+    renaming.value = null
+    return
+  }
+  busy.value = true
+  error.value = ''
+  try {
+    const updated = await shopsApi.rename(shop.name, next)
+    Object.assign(shop, updated)
+    shops.value?.sort((a, b) => a.shop_name.localeCompare(b.shop_name))
+    info.value = t('shopSetup.renamed', { name: updated.shop_name })
+    renaming.value = null
+  } catch (err) {
+    error.value = err instanceof ApiError ? err.message : String(err)
+  } finally {
+    busy.value = false
+  }
+}
+
 async function toggle(shop: ShopRow) {
   error.value = info.value = ''
   try {
@@ -65,16 +95,33 @@ async function toggle(shop: ShopRow) {
 
     <ul v-if="shops.length" class="list stagger mt-4">
       <li v-for="shop in shops" :key="shop.name" class="flex flex-wrap items-center gap-3 px-4 py-3" :class="shop.enabled ? '' : 'opacity-60'">
-        <span class="min-w-0 flex-1">
-          <span class="block font-medium text-slate-900"><bdi>{{ shop.shop_name }}</bdi></span>
-          <span class="block truncate text-[13px] text-slate-500">
-            <bdi>{{ shop.company }}</bdi><template v-if="shop.warehouse"> · <bdi>{{ shop.warehouse }}</bdi></template>
+        <!-- Renaming this shop -->
+        <form v-if="renaming === shop.name" class="flex min-w-0 flex-1 flex-wrap gap-2" @submit.prevent="saveRename(shop)">
+          <input
+            v-model="renameTo"
+            maxlength="140"
+            dir="auto"
+            autofocus
+            class="field min-w-0 flex-1 py-2 text-[15px]"
+            :aria-label="t('shopSetup.name')"
+            @keydown.esc.prevent="renaming = null"
+          />
+          <button type="submit" class="btn-primary px-4 py-2" :disabled="!renameTo.trim() || busy">{{ t('shopSetup.saveName') }}</button>
+          <button type="button" class="btn-secondary px-4 py-2" @click="renaming = null">{{ t('recovery.cancel') }}</button>
+        </form>
+        <template v-else>
+          <span class="min-w-0 flex-1">
+            <span class="block font-medium text-slate-900"><bdi>{{ shop.shop_name }}</bdi></span>
+            <span class="block truncate text-[13px] text-slate-500">
+              <bdi>{{ shop.company }}</bdi><template v-if="shop.warehouse"> · <bdi>{{ shop.warehouse }}</bdi></template>
+            </span>
           </span>
-        </span>
-        <span v-if="!shop.enabled" class="badge-warn">{{ t('shopSetup.off') }}</span>
-        <button type="button" class="btn-quiet px-2.5 py-1 text-[13px]" @click="toggle(shop)">
-          {{ shop.enabled ? t('shopSetup.switchOff') : t('shopSetup.switchOn') }}
-        </button>
+          <span v-if="!shop.enabled" class="badge-warn">{{ t('shopSetup.off') }}</span>
+          <button type="button" class="btn-quiet px-2.5 py-1 text-[13px]" @click="startRename(shop)">{{ t('shopSetup.rename') }}</button>
+          <button type="button" class="btn-quiet px-2.5 py-1 text-[13px]" @click="toggle(shop)">
+            {{ shop.enabled ? t('shopSetup.switchOff') : t('shopSetup.switchOn') }}
+          </button>
+        </template>
       </li>
     </ul>
     <p v-else class="notice-warn mt-4">{{ t('shopSetup.none') }}</p>

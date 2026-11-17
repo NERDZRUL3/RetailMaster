@@ -259,7 +259,8 @@
     "return": "Retour",
     "openProduct": "Ouvrir {name}",
     "noShopOwner": "Vous n’avez encore aucun magasin. Ajoutez votre premier magasin pour commencer à vendre et donner l’accès à votre équipe.",
-    "addShop": "Ajouter votre premier magasin"
+    "addShop": "Ajouter votre premier magasin",
+    "shopOff": "{name} (désactivé)"
   },
   "receive": {
     "title": "Réception de stock",
@@ -708,6 +709,9 @@
     "off": "Désactivé",
     "switchOff": "Désactiver",
     "switchOn": "Activer",
-    "pageSubtitle": "Vos magasins, chacun avec son stock et sa caisse."
+    "pageSubtitle": "Vos magasins, chacun avec son stock et sa caisse.",
+    "rename": "Renommer",
+    "saveName": "Enregistrer",
+    "renamed": "Renommé en {name}."
   }
 }

@@ -259,7 +259,8 @@
     "return": "Return",
     "openProduct": "Open {name}",
     "noShopOwner": "You have no shop yet. Add your first shop to start selling and give your staff access.",
-    "addShop": "Add your first shop"
+    "addShop": "Add your first shop",
+    "shopOff": "{name} (off)"
   },
   "receive": {
     "title": "Receive stock",
@@ -708,6 +709,9 @@
     "off": "Off",
     "switchOff": "Switch off",
     "switchOn": "Switch on",
-    "pageSubtitle": "Your shops, each with its own stock and till."
+    "pageSubtitle": "Your shops, each with its own stock and till.",
+    "rename": "Rename",
+    "saveName": "Save",
+    "renamed": "Renamed to {name}."
   }
 }

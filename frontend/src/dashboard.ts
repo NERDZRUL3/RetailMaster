@@ -15,7 +15,8 @@ export interface Share {
 
 export interface Dashboard {
   currency: string | null
-  shops: { name: string; shop_name: string }[]
+  /** Owners also get switched-off shops (enabled 0), with their past sales. */
+  shops: { name: string; shop_name: string; enabled?: number }[]
   today: string
   low_stock: number
   // The rest is missing when the user has no shop.

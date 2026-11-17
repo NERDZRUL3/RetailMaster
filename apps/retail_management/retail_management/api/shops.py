@@ -87,6 +87,34 @@ def create_shop(shop_name: str, company: str | None = None) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
+def rename_shop(shop: str, new_name: str) -> dict:
+	"""Give a shop a new name. Staff access, sales and stock follow it (every
+	link to the shop is renamed); its warehouse and till keep their names."""
+	_require_owner()
+	if not frappe.db.exists("Retail Shop", shop):
+		frappe.throw(_("Shop {0} not found.").format(shop))
+	name = " ".join((new_name or "").split())[:140]
+	if not name:
+		frappe.throw(_("Enter a shop name."))
+	if name == shop:
+		return _shop(shop)
+	if frappe.db.exists("Retail Shop", name) and name.lower() != shop.lower():
+		frappe.throw(_("A shop called {0} already exists.").format(name))
+	from frappe.model.rename_doc import rename_doc
+
+	# Renaming checks write rights on every linked document type; the owner
+	# check above is the one that matters, so the rename runs as Administrator.
+	acting = frappe.session.user
+	try:
+		frappe.set_user("Administrator")
+		renamed = rename_doc("Retail Shop", shop, name, force=True, show_alert=False)
+	finally:
+		frappe.set_user(acting)
+	frappe.db.set_value("Retail Shop", renamed, "shop_name", name)
+	return _shop(renamed)
+
+
+@frappe.whitelist(methods=["POST"])
 def set_shop_enabled(shop: str, enabled: int | str) -> dict:
 	"""Switch a shop off (hidden from menus and the till) or back on. Its
 	sales, stock and staff access stay as they are."""

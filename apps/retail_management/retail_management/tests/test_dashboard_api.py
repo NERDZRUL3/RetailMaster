@@ -158,6 +158,19 @@ class TestDashboardApi(IntegrationTestCase):
 		self.assertEqual(split[SHOP_A]["sales"], 2)
 		self.assertEqual(split[SHOP_B]["sales"], 1)
 
+	def test_switched_off_shop_keeps_its_history_for_the_owner(self):
+		frappe.db.set_value("Retail Shop", SHOP_B, "enabled", 0)
+		try:
+			data = self.data(self.owner)
+			listed = {row["name"]: row["enabled"] for row in data["shops"]}
+			self.assertEqual(listed[SHOP_B], 0)
+			split = {row["shop_name"]: row for row in data["customers"]["by_shop"]}
+			self.assertEqual(split[SHOP_B]["sales"], 1)
+			self.assertEqual(self.data(self.owner, SHOP_B)["sales"]["value"], 1)
+		finally:
+			frappe.set_user("Administrator")
+			frappe.db.set_value("Retail Shop", SHOP_B, "enabled", 1)
+
 	def test_manager_only_sees_own_shop(self):
 		data = self.data(self.manager)
 		self.assertEqual([row["name"] for row in data["shops"]], [SHOP_A])

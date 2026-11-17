@@ -139,7 +139,9 @@ onMounted(() => requestAnimationFrame(() => requestAnimationFrame(() => (barsSho
         :aria-label="t('products.shop')"
       >
         <option value="">{{ t('products.allShops') }}</option>
-        <option v-for="s in data.shops" :key="s.name" :value="s.name">{{ s.shop_name }}</option>
+        <option v-for="s in data.shops" :key="s.name" :value="s.name">
+          {{ s.enabled === 0 ? t('dash.shopOff', { name: s.shop_name }) : s.shop_name }}
+        </option>
       </select>
     </div>
 

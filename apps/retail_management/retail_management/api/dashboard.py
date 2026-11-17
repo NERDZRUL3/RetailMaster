@@ -16,6 +16,7 @@ from frappe import _
 from frappe.utils import add_days, add_months, cint, flt, get_first_day, get_last_day, getdate, nowdate
 
 from retail_management.api.inventory import INVENTORY_ROLES, _selling_price_list, _shops, get_low_stock
+from retail_management.services.permissions import has_full_shop_access
 
 TOP_CATEGORIES = 5
 TOP_PRODUCTS = 5
@@ -61,16 +62,34 @@ def _invoice_sql(where: str = "") -> str:
 	"""
 
 
+def _dashboard_shops(shop: str | None = None) -> list[dict]:
+	"""Shops in scope. Owners and partners also keep switched-off shops, so a
+	closed shop's past sales stay in the totals; staff see their active shops."""
+	if not has_full_shop_access():
+		return _shops(shop)
+	rows = frappe.get_all(
+		"Retail Shop",
+		filters={"warehouse": ("is", "set"), **({"name": shop} if shop else {})},
+		fields=["name", "shop_name", "retail_business", "company", "warehouse", "enabled"],
+		order_by="enabled desc, shop_name asc",
+	)
+	if shop and not rows:
+		frappe.throw(_("Shop {0} not found.").format(shop), frappe.DoesNotExistError)
+	return rows
+
+
 @frappe.whitelist()
 def get_dashboard(shop: str | None = None) -> dict:
 	_require_dashboard()
-	shops = _shops(shop)
+	shops = _dashboard_shops(shop)
 	warehouses = {row.warehouse: row for row in shops}
 	today = getdate(nowdate())
 
 	result = {
 		"currency": frappe.get_cached_value("Company", shops[0].company, "default_currency") if shops else None,
-		"shops": [{"name": row.name, "shop_name": row.shop_name} for row in shops],
+		"shops": [
+			{"name": row.name, "shop_name": row.shop_name, "enabled": cint(row.get("enabled", 1))} for row in shops
+		],
 		"today": today.isoformat(),
 		"low_stock": 0,
 	}

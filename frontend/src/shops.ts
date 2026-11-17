@@ -15,6 +15,7 @@ export const shopsApi = {
   setup: () => api.get<{ shops: ShopRow[]; companies: string[] }>(`${API}.get_shop_setup`),
   create: (shopName: string, company?: string) =>
     api.post<ShopRow>(`${API}.create_shop`, { shop_name: shopName, ...(company ? { company } : {}) }),
+  rename: (shop: string, newName: string) => api.post<ShopRow>(`${API}.rename_shop`, { shop, new_name: newName }),
   setEnabled: (shop: string, enabled: boolean) =>
     api.post<ShopRow>(`${API}.set_shop_enabled`, { shop, enabled: enabled ? 1 : 0 }),
 }
