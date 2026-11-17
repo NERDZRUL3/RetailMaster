@@ -33,7 +33,13 @@
     "myShop": "Mon magasin",
     "settings": "Paramètres",
     "products": "Produits",
-    "home": "Accueil"
+    "home": "Accueil",
+    "menu": "Menu",
+    "general": "Général",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "searchProducts": "Chercher un produit ou scanner un code-barres",
+    "lowStockBadge": "{count} produit en stock bas | {count} produits en stock bas"
   },
   "common": {
     "notConnected": "Pas encore connecté",
@@ -125,5 +131,47 @@
     "save": "Enregistrer le produit",
     "saving": "Enregistrement…",
     "saved": "Enregistré."
+  },
+  "overview": {
+    "title": "Vue d’ensemble",
+    "subtitle": "Ventes et stock de vos magasins.",
+    "period": "Période",
+    "periods": {
+      "7d": "7 jours",
+      "30d": "30 jours",
+      "12m": "12 mois"
+    },
+    "kpi": {
+      "revenue": "Chiffre d’affaires",
+      "sales": "Ventes",
+      "average": "Vente moyenne",
+      "returns": "Retours"
+    },
+    "previous": "Période précédente",
+    "up": "en hausse",
+    "down": "en baisse",
+    "revenueChart": "Chiffre d’affaires",
+    "revenueHint": {
+      "7d": "Par jour, retours déduits.",
+      "30d": "Par jour, retours déduits.",
+      "12m": "Par mois, retours déduits."
+    },
+    "byShopChart": "Chiffre d’affaires par magasin",
+    "byShopHint": "La part de chaque magasin sur la même période.",
+    "recent": "Dernières ventes",
+    "noRecent": "Aucune vente enregistrée pour l’instant.",
+    "noSales": "Aucune vente sur cette période. Les chiffres apparaissent dès que des ventes sont enregistrées.",
+    "lowStock": "{count} produit en stock bas | {count} produits en stock bas",
+    "sale": "Vente",
+    "return": "Retour",
+    "col": {
+      "invoice": "Ticket",
+      "date": "Date",
+      "shop": "Magasin",
+      "customer": "Client",
+      "type": "Type",
+      "items": "Articles",
+      "total": "Total"
+    }
   }
 }

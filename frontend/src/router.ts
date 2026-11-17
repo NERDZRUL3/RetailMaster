@@ -26,7 +26,7 @@ export const router = createRouter({
         {
           path: 'owner',
           component: () => import('./pages/owner/OwnerDashboard.vue'),
-          meta: { homes: ['owner'] },
+          meta: { homes: ['owner', 'manager'] },
         },
         {
           path: 'shop',

@@ -82,6 +82,11 @@ creates. It only adds rights, never removes them.
 | Brand | read, write, create | read |
 | Item Group, UOM, Price List | read | read |
 | Warehouse, Bin, Stock Ledger Entry | read | read (own shops via User Permissions) |
+| Sales Invoice | read | read (own shops: the invoice's warehouse is scoped by User Permissions) |
+
+The overview dashboard (`retail_management.api.dashboard`) reads submitted
+Sales Invoices whose source warehouse is one of the user's shops. Cashiers
+are refused.
 
 Side effect: once a doctype has Custom DocPerms, Frappe uses those instead
 of the standard ones, so later ERPNext upgrades that change that doctype's
@@ -107,3 +112,6 @@ purchasing, sales and POS documents). Tested in `test_inventory_api.py`.
   name, per-shop stock and low stock, product create and edit, duplicate
   barcodes, other shops' reorder rules kept, cashier refused, manager with no
   shop blocked.
+- `tests/test_dashboard_api.py` (10 tests): overview figures net of returns,
+  comparison with the previous period, daily and monthly series split by
+  shop, latest sales, manager limited to own shop, cashier refused.

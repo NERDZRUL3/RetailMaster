@@ -33,7 +33,13 @@
     "myShop": "My shop",
     "settings": "Settings",
     "products": "Products",
-    "home": "Home"
+    "home": "Home",
+    "menu": "Menu",
+    "general": "General",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "searchProducts": "Search products or scan a barcode",
+    "lowStockBadge": "{count} product low on stock | {count} products low on stock"
   },
   "common": {
     "notConnected": "Not connected yet",
@@ -125,5 +131,47 @@
     "save": "Save product",
     "saving": "Saving…",
     "saved": "Saved."
+  },
+  "overview": {
+    "title": "Overview",
+    "subtitle": "Sales and stock in your shops.",
+    "period": "Period",
+    "periods": {
+      "7d": "7 days",
+      "30d": "30 days",
+      "12m": "12 months"
+    },
+    "kpi": {
+      "revenue": "Revenue",
+      "sales": "Sales",
+      "average": "Average sale",
+      "returns": "Returns"
+    },
+    "previous": "Previous period",
+    "up": "up",
+    "down": "down",
+    "revenueChart": "Revenue",
+    "revenueHint": {
+      "7d": "Per day, returns deducted.",
+      "30d": "Per day, returns deducted.",
+      "12m": "Per month, returns deducted."
+    },
+    "byShopChart": "Revenue by shop",
+    "byShopHint": "Each shop’s share over the same period.",
+    "recent": "Latest sales",
+    "noRecent": "No sales recorded yet.",
+    "noSales": "No sales in this period. Figures appear here as soon as sales are recorded.",
+    "lowStock": "{count} product low on stock | {count} products low on stock",
+    "sale": "Sale",
+    "return": "Return",
+    "col": {
+      "invoice": "Receipt",
+      "date": "Date",
+      "shop": "Shop",
+      "customer": "Customer",
+      "type": "Type",
+      "items": "Items",
+      "total": "Total"
+    }
   }
 }

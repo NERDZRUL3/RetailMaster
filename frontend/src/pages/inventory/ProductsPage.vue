@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api'
 import { type FormOptions, formatMoney, formatQty, inventoryApi, type Product } from '@/inventory'
 
 const { t, locale } = useI18n()
 const router = useRouter()
+const route = useRoute()
 
 const options = ref<FormOptions | null>(null)
 const products = ref<Product[]>([])
-const query = ref('')
+// The top bar search and the low-stock badge open this page with ?q= / ?low=1.
+const query = ref(String(route.query.q ?? ''))
 const shop = ref('')
-const lowOnly = ref(false)
+const lowOnly = ref(route.query.low === '1')
 const loading = ref(false)
 const error = ref('')
 const searchInput = ref<HTMLInputElement | null>(null)
@@ -41,6 +43,12 @@ watch(query, () => {
   timer = setTimeout(search, 300)
 })
 watch([shop, lowOnly], search)
+watch(
+  () => route.query.q,
+  (q) => {
+    if (q !== undefined) query.value = String(q)
+  },
+)
 
 async function onEnter() {
   clearTimeout(timer)

@@ -86,6 +86,7 @@ def seed_demo(passwords: dict | str | None = None, password: str | None = None):
 			frappe.get_doc({"doctype": "Retail Shop Access", "user": email, "retail_shop": shop}).insert()
 
 	_seed_demo_products(company)
+	_seed_demo_sales(company)
 
 	frappe.db.commit()  # nosemgrep: one-off dev seed run from the command line
 	return [user[0] for user in DEMO_USERS]
@@ -127,3 +128,108 @@ def _seed_demo_products(company: str):
 			)
 			entry.insert()
 			entry.submit()
+
+
+DEMO_SALE_REMARK = "Demo sale (synthetic data from retail_management.dev.seed_demo)"
+DEMO_CUSTOMERS = ("Demo Walk-in Customer", "Demo Customer Amal", "Demo Customer Youssef", "Demo Customer Sara")
+
+
+def _demo_customer(name: str) -> str:
+	if not frappe.db.exists("Customer", name):
+		frappe.get_doc(
+			{
+				"doctype": "Customer",
+				"customer_name": name,
+				"customer_group": frappe.db.get_value("Customer Group", {"is_group": 0}, "name"),
+				"territory": frappe.db.get_value("Territory", {"is_group": 0}, "name"),
+			}
+		).insert(ignore_permissions=True)
+	return name
+
+
+def _ensure_fiscal_years(first_year: int):
+	"""Calendar fiscal years back to first_year, so older demo sales can be
+	posted. Copies the shape (start month and day) of the existing year."""
+	import datetime
+
+	current = frappe.get_all("Fiscal Year", fields=["year_start_date"], order_by="year_start_date asc", limit=1)
+	if not current:
+		return
+	start = current[0].year_start_date
+	for year in range(first_year, start.year):
+		begin = datetime.date(year, start.month, start.day)
+		if frappe.db.exists("Fiscal Year", {"year_start_date": begin}):
+			continue
+		frappe.get_doc(
+			{
+				"doctype": "Fiscal Year",
+				"year": str(year) if start.month == 1 else f"{year}-{year + 1}",
+				"year_start_date": begin,
+				"year_end_date": datetime.date(year + 1, start.month, start.day) - datetime.timedelta(days=1),
+			}
+		).insert(ignore_permissions=True)
+
+
+def _seed_demo_sales(company: str):
+	"""About 13 months of synthetic sales in both demo shops (once only), so the
+	overview dashboard has figures to show. Stock is not touched (update_stock=0)."""
+	import random
+
+	from frappe.utils import add_days, nowdate
+
+	if frappe.db.exists("Sales Invoice", {"remarks": DEMO_SALE_REMARK}):
+		return
+	_ensure_fiscal_years(frappe.utils.getdate(add_days(nowdate(), -400)).year)
+	customers = [_demo_customer(name) for name in DEMO_CUSTOMERS]
+	products = [(barcode, price) for barcode, _name, price, _qty, _level in DEMO_PRODUCTS]
+	warehouses = [frappe.db.get_value("Retail Shop", shop, "warehouse") for shop in DEMO_SHOPS]
+	rng = random.Random(20261117)  # same demo data on every site
+
+	def sell(warehouse: str, days_ago: int, scale: float, is_return: bool = False, against: str | None = None):
+		# A return must name the same customer as the sale it reverses.
+		customer = frappe.db.get_value("Sales Invoice", against, "customer") if against else rng.choice(customers)
+		date = add_days(nowdate(), -days_ago)
+		items = rng.sample(products, rng.randint(1, len(products)))
+		sign = -1 if is_return else 1
+		doc = frappe.get_doc(
+			{
+				"doctype": "Sales Invoice",
+				"company": company,
+				"customer": customer,
+				"set_posting_time": 1,
+				"posting_date": date,
+				"due_date": date,
+				"set_warehouse": warehouse,
+				"update_stock": 0,
+				"is_return": int(is_return),
+				"return_against": against,
+				"remarks": DEMO_SALE_REMARK,
+				"items": [
+					{
+						"item_code": code,
+						"qty": sign * max(1, round(rng.randint(1, 12) * scale)),
+						"rate": price,
+						"warehouse": warehouse,
+					}
+					for code, price in items
+				],
+			}
+		)
+		doc.insert(ignore_permissions=True)
+		doc.submit()
+		return doc.name
+
+	for shop_index, warehouse in enumerate(warehouses):
+		shop_scale = 1.0 if shop_index == 0 else 0.7
+		for days_ago in range(400, -1, -1):
+			recent = days_ago < 35
+			if not recent and days_ago % 4:
+				continue  # older months: one bigger sale every 4 days
+			weekday = frappe.utils.getdate(add_days(nowdate(), -days_ago)).weekday()
+			busy = 1.4 if weekday in (4, 5) else 1.0  # Friday and Saturday
+			count = rng.randint(1, 3) if recent else 1
+			scale = shop_scale * busy * (1.0 if recent else 3.0)
+			for _ in range(count):
+				name = sell(warehouse, days_ago, scale)
+				if recent and rng.random() < 0.05:
+					sell(warehouse, days_ago, 0.3, is_return=True, against=name)

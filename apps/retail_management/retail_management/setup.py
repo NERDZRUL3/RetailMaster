@@ -21,10 +21,13 @@ _CATALOGUE_AND_STOCK = {
 	"Bin": "r",
 	"Stock Ledger Entry": "r",
 }
+# Read-only sales figures for the overview dashboard. Managers only see their
+# own shops' invoices: the invoice's warehouse is scoped by User Permissions.
+_SALES_REPORTING = {"Sales Invoice": "r"}
 ERPNEXT_PERMISSIONS = {
-	ROLE_OWNER: {**_CATALOGUE_AND_STOCK, "Brand": "rwc"},
-	ROLE_PARTNER: {**_CATALOGUE_AND_STOCK, "Brand": "rwc"},
-	ROLE_MANAGER: _CATALOGUE_AND_STOCK,
+	ROLE_OWNER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, "Brand": "rwc"},
+	ROLE_PARTNER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, "Brand": "rwc"},
+	ROLE_MANAGER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING},
 	# Cashiers get ERPNext permissions with the point of sale (M4).
 }
 _FLAG_TO_PTYPE = {"r": ("read", "report"), "w": ("write",), "c": ("create",), "d": ("delete",)}
