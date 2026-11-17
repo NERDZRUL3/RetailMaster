@@ -48,7 +48,7 @@ export interface Overview {
 
 export const dashboardApi = {
   overview: (period: Period, shop: string) => api.get<Overview>(`${API}.get_overview`, { period, shop }),
-  counts: () => api.get<{ low_stock: number }>(`${API}.get_counts`),
+  counts: () => api.get<{ low_stock: number; currency: string | null }>(`${API}.get_counts`),
 }
 
 /** 12.5k, 1.2M: for chart axes. */

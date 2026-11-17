@@ -50,6 +50,48 @@ export const router = createRouter({
           meta: { homes: ['owner', 'manager'] },
         },
         {
+          path: 'categories',
+          component: () => import('./pages/ComingSoonPage.vue'),
+          props: { section: 'categories' },
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'inventory',
+          component: () => import('./pages/ComingSoonPage.vue'),
+          props: { section: 'inventory' },
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'orders',
+          component: () => import('./pages/ComingSoonPage.vue'),
+          props: { section: 'orders' },
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'suppliers',
+          component: () => import('./pages/ComingSoonPage.vue'),
+          props: { section: 'suppliers' },
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'purchase-orders',
+          component: () => import('./pages/ComingSoonPage.vue'),
+          props: { section: 'purchaseOrders' },
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'returns',
+          component: () => import('./pages/ComingSoonPage.vue'),
+          props: { section: 'returns' },
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'reports',
+          component: () => import('./pages/ComingSoonPage.vue'),
+          props: { section: 'reports' },
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
           path: 'settings',
           component: () => import('./pages/settings/SettingsPage.vue'),
           meta: { settings: true },

@@ -1,270 +1,370 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+// Dashboard layout. The figures are SAMPLE data from @/sample until each
+// widget is connected to the API (retail_management.api.dashboard).
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { ApiError } from '@/api'
-import BarChart, { type Bar } from '@/components/BarChart.vue'
-import {
-  bucketLabel,
-  bucketTitle,
-  dashboardApi,
-  formatCompact,
-  formatDate,
-  type KpiKey,
-  type Overview,
-  type Period,
-  PERIODS,
-} from '@/dashboard'
+import AreaChart from '@/components/charts/AreaChart.vue'
+import ColumnChart from '@/components/charts/ColumnChart.vue'
+import DonutChart from '@/components/charts/DonutChart.vue'
+import { dashboardApi, formatCompact } from '@/dashboard'
 import { formatMoney } from '@/inventory'
+import { type OrderStatus, sample } from '@/sample'
 
 const { t, locale } = useI18n()
 
-const period = ref<Period>('7d')
-const shop = ref('')
-const data = ref<Overview | null>(null)
-const loading = ref(false)
-const error = ref('')
-
-let requestId = 0
-async function load() {
-  const id = ++requestId
-  loading.value = true
-  error.value = ''
+const currency = ref<string | null>(null)
+onMounted(async () => {
   try {
-    const result = await dashboardApi.overview(period.value, shop.value)
-    if (id === requestId) data.value = result
-  } catch (err) {
-    if (id === requestId) error.value = err instanceof ApiError ? err.message : String(err)
-  } finally {
-    if (id === requestId) loading.value = false
+    currency.value = (await dashboardApi.counts()).currency
+  } catch {
+    currency.value = null
   }
-}
-watch([period, shop], load)
-onMounted(load)
+})
 
-const money = (value: number) => formatMoney(value, data.value?.currency ?? null, locale.value)
-const count = (value: number) => new Intl.NumberFormat(locale.value).format(value)
+const money = (value: number) => formatMoney(value, currency.value, locale.value)
+const moneyShort = (value: number) =>
+  formatMoney(value, currency.value, locale.value).replace(/[.,]00(?=\D*$)/, '')
+const number = (value: number) => new Intl.NumberFormat(locale.value).format(value)
+const percent = (value: number) => `${Math.abs(value).toLocaleString(locale.value)}%`
 const axis = (value: number) => formatCompact(value, locale.value)
 
-// Shop colours for the split chart: the brand, then neutrals.
-const SHOP_COLORS = ['var(--color-brand-600)', 'var(--color-slate-900)', 'var(--color-slate-400)', 'var(--color-brand-100)']
-
-interface KpiCard {
-  key: KpiKey
-  label: string
-  format: (value: number) => string
-  /** For returns, going up is bad news. */
-  upIsBad?: boolean
+// Dates counted back from today, for the sample series.
+const dayLabel = (daysAgo: number, options: Intl.DateTimeFormatOptions) => {
+  const date = new Date()
+  date.setDate(date.getDate() - daysAgo)
+  return new Intl.DateTimeFormat(locale.value, options).format(date)
 }
-const cards = computed<KpiCard[]>(() => [
-  { key: 'revenue', label: t('overview.kpi.revenue'), format: money },
-  { key: 'sales', label: t('overview.kpi.sales'), format: count },
-  { key: 'average', label: t('overview.kpi.average'), format: money },
-  { key: 'returns', label: t('overview.kpi.returns'), format: count, upIsBad: true },
-])
 
-const revenueBars = computed<Bar[]>(() =>
-  (data.value?.series ?? []).map((bucket) => ({
-    key: bucket.key,
-    label: bucketLabel(bucket.key, period.value, locale.value),
-    title: bucketTitle(bucket.key, data.value!.monthly, locale.value),
-    segments: [{ value: bucket.total, color: 'var(--color-brand-600)' }],
+const ordersLine = computed(() =>
+  sample.recentOrders.points.map((point, i, all) => ({
+    label: dayLabel((all.length - 1 - i) * 3, { day: 'numeric', month: 'short' }),
+    value: point.value,
   })),
 )
-const shopBars = computed<Bar[]>(() =>
-  (data.value?.series ?? []).map((bucket) => ({
-    key: bucket.key,
-    label: bucketLabel(bucket.key, period.value, locale.value),
-    title: bucketTitle(bucket.key, data.value!.monthly, locale.value),
-    segments: (data.value?.shops ?? []).map((s, i) => ({
-      value: bucket.by_shop[s.name] ?? 0,
-      color: SHOP_COLORS[i % SHOP_COLORS.length],
-      name: s.shop_name,
-    })),
+
+const weekColumns = computed(() =>
+  sample.revenue.week.map((pair, i) => {
+    const date = new Date(2024, 0, 1 + i) // a Monday
+    return {
+      label: new Intl.DateTimeFormat(locale.value, { weekday: 'short' }).format(date),
+      values: [pair[1], pair[0]] as [number, number],
+    }
+  }),
+)
+
+const orderColumns = computed(() =>
+  sample.orders.map((pair, i, all) => ({
+    label: dayLabel(all.length - 1 - i, { day: 'numeric', month: 'short' }),
+    title: dayLabel(all.length - 1 - i, { day: 'numeric', month: 'long' }),
+    values: [pair[0] - pair[1], pair[1]] as [number, number],
   })),
 )
-const labelEvery = computed(() => (period.value === '30d' ? 5 : 1))
 
-const range = computed(() =>
-  data.value ? `${formatDate(data.value.start, locale.value)} – ${formatDate(data.value.end, locale.value)}` : '',
+// Category colours: the brand, deep brand, warm greys, the soft tone.
+const CATEGORY_COLORS = [
+  { color: 'var(--color-brand-600)' },
+  { color: 'color-mix(in srgb, var(--brand) 45%, #3b2417)' },
+  { color: 'color-mix(in srgb, var(--brand) 22%, #6b6b6b)' },
+  { color: 'var(--color-brand-200)', dark: true },
+  { color: 'var(--color-slate-400)', dark: true },
+  { color: 'var(--color-slate-300)', dark: true },
+]
+const slices = computed(() =>
+  sample.categories.map((c, i) => ({ label: c.name, value: c.percent, ...CATEGORY_COLORS[i % CATEGORY_COLORS.length] })),
 )
-const splitByShop = computed(() => (data.value?.shops.length ?? 0) > 1)
-const hasSales = computed(() => (data.value?.series ?? []).some((bucket) => bucket.total !== 0))
+
+type Range = 'all' | 'weekly' | 'monthly'
+const RANGES: Range[] = ['all', 'weekly', 'monthly']
+const categoryRange = ref<Range>('monthly')
+const hoursRange = ref<Range>('all')
+
+const STATUS_STYLE: Record<OrderStatus, string> = {
+  delivered: 'bg-green-500/12 text-green-700 dark:text-green-400',
+  processing: 'bg-brand-tint text-brand-ink',
+  shipped: 'bg-sky-500/12 text-sky-700 dark:text-sky-300',
+  cancelled: 'bg-red-500/12 text-red-700 dark:text-red-400',
+}
+const ago = (hours: number) => new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' }).format(-hours, 'hour')
+
+const maxHour = Math.max(...sample.hours.map((h) => h.percent))
 </script>
 
 <template>
   <div>
-    <!-- Heading, shop and period -->
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 class="page-title">{{ t('overview.title') }}</h1>
-        <p class="page-subtitle">{{ range || t('overview.subtitle') }}</p>
-      </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <select
-          v-if="data && data.shops.length > 1"
-          v-model="shop"
-          class="field w-auto rounded-full bg-white py-2.5 text-[15px] shadow-sm"
-          :aria-label="t('products.shop')"
-        >
-          <option value="">{{ t('products.allShops') }}</option>
-          <option v-for="s in data.shops" :key="s.name" :value="s.name">{{ s.shop_name }}</option>
-        </select>
-        <div class="segmented bg-white shadow-sm" role="group" :aria-label="t('overview.period')">
-          <button
-            v-for="p in PERIODS"
-            :key="p"
-            type="button"
-            class="segment h-9 px-4 text-[14px]"
-            :aria-pressed="period === p"
-            @click="period = p"
-          >
-            {{ t(`overview.periods.${p}`) }}
+    <h1 class="sr-only">{{ t('nav.items.dashboard') }}</h1>
+    <p class="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-500/12 px-3 py-1 text-[12px] font-medium text-amber-800 dark:text-amber-300">
+      <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+      {{ t('dash.sample') }}
+    </p>
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
+      <!-- Orders (line) -->
+      <article class="card p-5 xl:col-span-3">
+        <div class="flex items-start justify-between">
+          <h2 class="text-[15px] text-slate-700">{{ t('dash.orders') }}</h2>
+          <svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="m4 16 5-5 4 4 7-7M15 8h5v5" />
+          </svg>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-[28px] font-semibold tracking-tight text-slate-900 tabular-nums">{{ moneyShort(sample.recentOrders.value) }}</span>
+          <span class="text-[13px] font-medium text-brand-ink">↘ {{ percent(sample.recentOrders.change) }}</span>
+        </div>
+        <p class="text-[13px] text-slate-500">{{ t('dash.lastMonth', { value: moneyShort(sample.recentOrders.lastMonth) }) }}</p>
+        <div class="mt-2">
+          <AreaChart :points="ordersLine" :highlight="sample.recentOrders.highlight" :format="moneyShort" :label="t('dash.orders')" />
+        </div>
+      </article>
+
+      <!-- Customers (highlighted) -->
+      <article class="accent-card p-5 xl:col-span-3">
+        <div class="flex items-start justify-between">
+          <h2 class="text-[15px] font-medium text-slate-900">{{ t('dash.customers') }}</h2>
+          <svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-700" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="9" cy="8" r="3.5" /><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2 .7 3 2.8 3 6" />
+          </svg>
+        </div>
+        <div class="mt-3 grid grid-cols-2 divide-x divide-[var(--hairline)] rtl:divide-x-reverse">
+          <div class="pe-3">
+            <div class="text-[12px] text-slate-700">{{ t('dash.currentCustomers') }}</div>
+            <div class="mt-1 flex flex-wrap items-baseline gap-x-1.5">
+              <span class="text-[24px] font-semibold text-slate-900 tabular-nums">{{ number(sample.customers.current) }}</span>
+              <span class="text-[12px] font-medium whitespace-nowrap text-green-700 dark:text-green-400">↗ {{ percent(sample.customers.currentChange) }}</span>
+            </div>
+            <div class="text-[12px] text-slate-600">{{ t('dash.vsLastMonth') }}</div>
+          </div>
+          <div class="ps-3">
+            <div class="text-[12px] text-slate-700">{{ t('dash.newCustomers') }}</div>
+            <div class="mt-1 flex flex-wrap items-baseline gap-x-1.5">
+              <span class="text-[24px] font-semibold text-slate-900 tabular-nums">{{ number(sample.customers.fresh) }}</span>
+              <span class="text-[12px] font-medium whitespace-nowrap text-green-700 dark:text-green-400">↗ {{ percent(sample.customers.freshChange) }}</span>
+            </div>
+            <div class="text-[12px] text-slate-600">{{ t('dash.vsLastMonth') }}</div>
+          </div>
+        </div>
+        <div class="mt-4 border-t border-[var(--hairline)] pt-3 text-[13px] text-slate-700">{{ t('dash.byShop') }}</div>
+        <div class="mt-2 grid grid-cols-2 gap-2.5">
+          <div v-for="part in sample.customers.split" :key="part.label" class="rounded-xl p-3" style="background: var(--accent-inner)">
+            <div class="text-[20px] font-semibold text-slate-900 tabular-nums">{{ part.percent }}%</div>
+            <div class="text-[12px] text-slate-600">{{ part.label }}</div>
+            <div class="mt-2 flex flex-wrap items-baseline gap-x-1.5">
+              <span class="text-[16px] font-semibold text-slate-900 tabular-nums">{{ number(part.value) }}</span>
+              <span class="text-[11px] font-medium whitespace-nowrap text-green-700 dark:text-green-400">↗ {{ percent(part.change) }}</span>
+            </div>
+            <div class="text-[11px] text-slate-600">{{ t('dash.vsLastMonth') }}</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Revenue (mini columns) -->
+      <article class="card p-5 xl:col-span-3">
+        <div class="flex items-start justify-between">
+          <h2 class="text-[15px] text-slate-700">{{ t('dash.revenue') }}</h2>
+          <svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 8h16v12H4zM8 8V5h8v3M16 14h.01" />
+          </svg>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-[28px] font-semibold tracking-tight text-slate-900 tabular-nums">{{ moneyShort(sample.revenue.value) }}</span>
+          <span class="text-[13px] font-medium text-green-700 dark:text-green-400">↗ {{ percent(sample.revenue.change) }}</span>
+        </div>
+        <p class="text-[13px] text-slate-500">{{ t('dash.lastMonth', { value: moneyShort(sample.revenue.lastMonth) }) }}</p>
+        <p class="mt-3 text-[13px] text-slate-700">{{ t('dash.revenueWeek') }}</p>
+        <ColumnChart
+          class="mt-1"
+          :columns="weekColumns"
+          :series="[t('dash.lastWeek'), t('dash.thisWeek')]"
+          :format="moneyShort"
+          :format-axis="axis"
+          :label="t('dash.revenueWeek')"
+          :height="150"
+          :thickness="0.5"
+        />
+        <div class="mt-1 flex justify-center gap-4 text-[12px] text-slate-600">
+          <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-brand-600" />{{ t('dash.thisWeek') }}</span>
+          <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-brand-200" />{{ t('dash.lastWeek') }}</span>
+        </div>
+      </article>
+
+      <!-- Top categories (donut) -->
+      <article class="card p-5 xl:col-span-3">
+        <div class="flex items-start justify-between">
+          <h2 class="text-[15px] text-slate-700">{{ t('dash.topCategories') }}</h2>
+          <button type="button" disabled class="icon-btn -me-1.5 -mt-1.5" :title="t('dash.filtersSoon')" :aria-label="t('dash.filtersSoon')">
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+              <path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" />
+            </svg>
           </button>
         </div>
-      </div>
-    </div>
-
-    <p v-if="error" class="notice-error mt-6" role="alert">{{ error }}</p>
-
-    <div class="transition-opacity" :class="{ 'opacity-60': loading }" :aria-busy="loading">
-      <!-- Key figures -->
-      <section class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <article v-for="card in cards" :key="card.key" class="card-pad">
-          <div class="flex items-start justify-between gap-3">
-            <h2 class="text-[15px] text-slate-500">{{ card.label }}</h2>
-            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-700" aria-hidden="true">
-              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <template v-if="card.key === 'revenue'">
-                  <circle cx="12" cy="12" r="8.5" /><path d="M14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.5 0-2.6.8-2.6 2s1 1.7 2.6 2c1.6.3 2.7.8 2.7 2s-1.2 2-2.7 2c-1.2 0-2.2-.5-2.7-1.3M12 6.5v1.5M12 16v1.5" />
-                </template>
-                <template v-else-if="card.key === 'sales'">
-                  <path d="M3 4h2l2.4 11h10.2L20 7.5H6.2" /><circle cx="9" cy="19.5" r="1.3" /><circle cx="17" cy="19.5" r="1.3" />
-                </template>
-                <template v-else-if="card.key === 'average'">
-                  <path d="M4 19V9M10 19V5M16 19v-7M22 19H2" />
-                </template>
-                <template v-else>
-                  <path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
-                </template>
-              </svg>
-            </span>
-          </div>
-          <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span class="min-w-0 text-[clamp(24px,2.1vw,36px)] leading-none font-semibold tracking-tight break-words text-slate-900 tabular-nums">
-              {{ data?.kpis[card.key] ? card.format(data.kpis[card.key]!.value) : '—' }}
-            </span>
-            <span
-              v-if="data?.kpis[card.key]?.change != null"
-              class="badge gap-0.5 tabular-nums"
-              :class="
-                (data.kpis[card.key]!.change! >= 0) !== !!card.upIsBad
-                  ? 'bg-green-50 text-green-800'
-                  : 'bg-red-50 text-red-800'
-              "
-            >
-              <span aria-hidden="true">{{ data.kpis[card.key]!.change! >= 0 ? '↑' : '↓' }}</span>
-              <span class="sr-only">{{ data.kpis[card.key]!.change! >= 0 ? t('overview.up') : t('overview.down') }}</span>
-              {{ Math.abs(data.kpis[card.key]!.change!).toLocaleString(locale) }}%
-            </span>
-          </div>
-          <p class="hint mt-4">
-            {{ t('overview.previous') }}:
-            <span class="font-medium text-slate-700 tabular-nums">
-              {{ data?.kpis[card.key] ? card.format(data.kpis[card.key]!.previous) : '—' }}
-            </span>
-          </p>
-        </article>
-      </section>
-
-      <p v-if="data && !hasSales && !loading" class="notice-info mt-6">{{ t('overview.noSales') }}</p>
-
-      <!-- Charts -->
-      <section class="mt-6 grid grid-cols-1 gap-6" :class="{ 'xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]': splitByShop }">
-        <article class="card-pad">
-          <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 class="section-title">{{ t('overview.revenueChart') }}</h2>
-            <span v-if="data?.kpis.revenue" class="text-[15px] font-semibold text-slate-900 tabular-nums">
-              {{ money(data.kpis.revenue.value) }}
-            </span>
-          </div>
-          <p class="hint mt-1">{{ t(`overview.revenueHint.${period}`) }}</p>
-          <div class="mt-4">
-            <BarChart
-              :bars="revenueBars"
-              :format-value="money"
-              :format-axis="axis"
-              :label-every="labelEvery"
-              :label="t('overview.revenueChart')"
-            />
-          </div>
-        </article>
-
-        <!-- Only useful when there is more than one shop to compare. -->
-        <article v-if="splitByShop" class="card-pad">
-          <h2 class="section-title">{{ t('overview.byShopChart') }}</h2>
-          <p class="hint mt-1">{{ t('overview.byShopHint') }}</p>
-          <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
-            <li v-for="(s, i) in data?.shops ?? []" :key="s.name" class="inline-flex items-center gap-2 text-[13px] text-slate-600">
-              <span class="h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: SHOP_COLORS[i % SHOP_COLORS.length] }" />
-              <bdi>{{ s.shop_name }}</bdi>
-            </li>
-          </ul>
-          <div class="mt-2">
-            <BarChart
-              :bars="shopBars"
-              :format-value="money"
-              :format-axis="axis"
-              :striped="false"
-              :height="260"
-              :label-every="period === '7d' ? 1 : period === '12m' ? 2 : 6"
-              :label="t('overview.byShopChart')"
-            />
-          </div>
-        </article>
-      </section>
-
-      <!-- Latest sales -->
-      <section class="card-pad mt-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h2 class="section-title">{{ t('overview.recent') }}</h2>
-          <RouterLink v-if="data && data.low_stock" to="/products?low=1" class="badge-warn px-3 py-1 text-[13px]">
-            {{ t('overview.lowStock', { count: data.low_stock }, data.low_stock) }}
-          </RouterLink>
+        <div class="mt-2">
+          <DonutChart :slices="slices" :label="t('dash.topCategories')" :size="170" />
         </div>
+        <ul class="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1">
+          <li v-for="s in slices" :key="s.label" class="inline-flex items-center gap-1.5 text-[12px] text-slate-600">
+            <span class="h-2 w-2 rounded-full" :style="{ background: s.color }" />{{ s.label }}
+          </li>
+        </ul>
+        <div class="mt-3 grid grid-cols-3 rounded-xl bg-slate-100 p-1" role="group" :aria-label="t('dash.range')">
+          <button
+            v-for="r in RANGES"
+            :key="r"
+            type="button"
+            class="rounded-lg py-1.5 text-[13px] transition"
+            :class="categoryRange === r ? 'bg-brand-tint font-medium text-brand-ink ring-1 ring-brand' : 'text-slate-600 hover:text-slate-900'"
+            :aria-pressed="categoryRange === r"
+            @click="categoryRange = r"
+          >
+            {{ t(`dash.ranges.${r}`) }}
+          </button>
+        </div>
+      </article>
 
-        <p v-if="data && !data.recent.length" class="mt-4 text-[15px] text-slate-500">{{ t('overview.noRecent') }}</p>
-        <div v-else class="-mx-2 mt-4 overflow-x-auto">
-          <table class="w-full min-w-[640px] text-start text-[15px]">
+      <!-- Orders per day (stacked columns) -->
+      <article class="card p-5 md:col-span-2 xl:col-span-9">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="section-title text-[17px]">{{ t('dash.totalOrders') }}</h2>
+          <div class="flex items-center gap-4 text-[13px] text-slate-600">
+            <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-brand-200" />{{ t('dash.income') }}</span>
+            <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-brand-600" />{{ t('dash.profit') }}</span>
+            <button type="button" disabled class="icon-btn" :title="t('dash.filtersSoon')" :aria-label="t('dash.filtersSoon')">
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <ColumnChart
+          class="mt-4"
+          :columns="orderColumns"
+          :series="[t('dash.income'), t('dash.profit')]"
+          :total-label="t('dash.total')"
+          :format="moneyShort"
+          :format-axis="axis"
+          :label="t('dash.totalOrders')"
+          :height="260"
+          :initial="6"
+        />
+      </article>
+
+      <!-- Sales by time of day (horizontal bars) -->
+      <article class="card p-5 xl:col-span-3">
+        <div class="flex items-start justify-between">
+          <h2 class="text-[15px] text-slate-700">{{ t('dash.hours') }}</h2>
+          <button type="button" disabled class="icon-btn -me-1.5 -mt-1.5" :title="t('dash.filtersSoon')" :aria-label="t('dash.filtersSoon')">
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+              <path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" />
+            </svg>
+          </button>
+        </div>
+        <ul class="mt-5 space-y-3.5">
+          <li v-for="h in sample.hours" :key="h.label" class="grid grid-cols-[3.5rem_1fr_2.5rem] items-center gap-3 text-[13px]">
+            <span class="text-slate-600 tabular-nums" dir="ltr">{{ h.label }}</span>
+            <span class="h-3.5 rounded-sm bg-slate-100">
+              <span class="block h-full rounded-sm bg-brand-200" :style="{ width: `${(h.percent / maxHour) * 100}%` }" />
+            </span>
+            <span class="text-end font-medium text-slate-900 tabular-nums">{{ h.percent }}%</span>
+          </li>
+        </ul>
+        <div class="mt-5 grid grid-cols-3 rounded-xl bg-slate-100 p-1" role="group" :aria-label="t('dash.range')">
+          <button
+            v-for="r in RANGES"
+            :key="r"
+            type="button"
+            class="rounded-lg py-1.5 text-[13px] transition"
+            :class="hoursRange === r ? 'bg-brand-tint font-medium text-brand-ink ring-1 ring-brand' : 'text-slate-600 hover:text-slate-900'"
+            :aria-pressed="hoursRange === r"
+            @click="hoursRange = r"
+          >
+            {{ t(`dash.ranges.${r}`) }}
+          </button>
+        </div>
+      </article>
+
+      <!-- Product sales (table) -->
+      <article class="card p-5 md:col-span-2 xl:col-span-7">
+        <div class="flex items-center justify-between">
+          <h2 class="section-title text-[17px]">{{ t('dash.productSales') }}</h2>
+          <button type="button" disabled class="icon-btn" :title="t('dash.filtersSoon')" :aria-label="t('dash.filtersSoon')">
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+              <path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" />
+            </svg>
+          </button>
+        </div>
+        <div class="-mx-2 mt-3 overflow-x-auto">
+          <table class="w-full min-w-[460px] text-[13px]">
             <thead>
-              <tr class="text-[13px] text-slate-500">
-                <th class="rounded-s-xl bg-slate-50 px-3 py-3 text-start font-medium">{{ t('overview.col.invoice') }}</th>
-                <th class="bg-slate-50 px-3 py-3 text-start font-medium">{{ t('overview.col.date') }}</th>
-                <th class="bg-slate-50 px-3 py-3 text-start font-medium">{{ t('overview.col.shop') }}</th>
-                <th class="bg-slate-50 px-3 py-3 text-start font-medium">{{ t('overview.col.customer') }}</th>
-                <th class="bg-slate-50 px-3 py-3 text-start font-medium">{{ t('overview.col.type') }}</th>
-                <th class="bg-slate-50 px-3 py-3 text-end font-medium">{{ t('overview.col.items') }}</th>
-                <th class="rounded-e-xl bg-slate-50 px-3 py-3 text-end font-medium">{{ t('overview.col.total') }}</th>
+              <tr class="text-[12px] text-slate-500">
+                <th class="px-1.5 py-2 text-start font-normal">{{ t('dash.col.item') }}</th>
+                <th class="px-1.5 py-2 text-end font-normal">{{ t('dash.col.stock') }}</th>
+                <th class="px-1.5 py-2 text-end font-normal">{{ t('dash.col.oldPrice') }}</th>
+                <th class="px-1.5 py-2 text-end font-normal">{{ t('dash.col.sale') }}</th>
+                <th class="px-1.5 py-2 text-end font-normal">{{ t('dash.col.newPrice') }}</th>
+                <th class="px-1.5 py-2 text-end font-normal">{{ t('dash.col.sold') }}</th>
+                <th class="w-8"><span class="sr-only">{{ t('dash.col.actions') }}</span></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in data?.recent ?? []" :key="row.name" class="border-b border-[var(--hairline)] last:border-0">
-                <td class="px-3 py-4 font-medium text-slate-900" dir="ltr">{{ row.name }}</td>
-                <td class="px-3 py-4 whitespace-nowrap text-slate-700">{{ formatDate(row.date, locale) }}</td>
-                <td class="px-3 py-4 text-slate-700"><bdi>{{ row.shop_name }}</bdi></td>
-                <td class="px-3 py-4 text-slate-700"><bdi>{{ row.customer }}</bdi></td>
-                <td class="px-3 py-4">
-                  <span :class="row.is_return ? 'badge bg-red-50 text-red-800' : 'badge bg-green-50 text-green-800'">
-                    {{ row.is_return ? t('overview.return') : t('overview.sale') }}
+              <tr v-for="p in sample.products" :key="p.name" class="border-t border-[var(--hairline)]">
+                <td class="px-1.5 py-3">
+                  <span class="flex items-center gap-3">
+                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-500" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+                        <path d="M12 3 4 7v10l8 4 8-4V7l-8-4Z" /><path d="m4 7 8 4 8-4M12 11v10" />
+                      </svg>
+                    </span>
+                    <span class="font-medium text-slate-900">{{ p.name }}</span>
                   </span>
                 </td>
-                <td class="px-3 py-4 text-end text-slate-700 tabular-nums">{{ count(Math.abs(row.items)) }}</td>
-                <td class="px-3 py-4 text-end font-semibold text-slate-900 tabular-nums">{{ money(row.total) }}</td>
+                <td class="px-1.5 py-3 text-end text-slate-700 tabular-nums">{{ number(p.stock) }}</td>
+                <td class="px-1.5 py-3 text-end text-slate-500 line-through tabular-nums">{{ money(p.oldPrice) }}</td>
+                <td class="px-1.5 py-3 text-end font-medium text-green-700 tabular-nums dark:text-green-400">{{ p.sale }}%</td>
+                <td class="px-1.5 py-3 text-end font-medium text-slate-900 tabular-nums">{{ money(p.oldPrice * (1 - p.sale / 100)) }}</td>
+                <td class="px-1.5 py-3 text-end text-slate-700 tabular-nums">{{ number(p.sold) }}</td>
+                <td class="px-1 py-3 text-center">
+                  <button type="button" disabled class="icon-btn mx-auto" :aria-label="t('dash.col.actions')">
+                    <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true">
+                      <circle cx="12" cy="5.5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="18.5" r="1.6" />
+                    </svg>
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-      </section>
+      </article>
+
+      <!-- Recent orders (list) -->
+      <article class="card p-5 md:col-span-2 xl:col-span-5">
+        <div class="flex items-center justify-between">
+          <h2 class="section-title text-[17px]">{{ t('dash.recentOrders') }}</h2>
+          <button type="button" disabled class="icon-btn" :title="t('dash.filtersSoon')" :aria-label="t('dash.filtersSoon')">
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+              <path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" />
+            </svg>
+          </button>
+        </div>
+        <ul class="mt-3">
+          <li v-for="o in sample.recent" :key="o.id" class="flex items-center gap-3 border-t border-[var(--hairline)] py-3 first:border-0">
+            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-tint text-brand-ink" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+                <path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2M10 13h4" />
+              </svg>
+            </span>
+            <span class="min-w-0 flex-1 leading-tight">
+              <span class="block truncate text-[14px] font-medium text-slate-900" dir="ltr">#{{ o.id }}</span>
+              <span class="block truncate text-[13px] text-slate-500">{{ o.customer }}</span>
+            </span>
+            <span class="shrink-0 text-[14px] font-medium text-slate-900 tabular-nums">{{ money(o.amount) }}</span>
+            <span class="shrink-0 text-end leading-tight">
+              <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium" :class="STATUS_STYLE[o.status]">
+                <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />{{ t(`dash.status.${o.status}`) }}
+              </span>
+              <span class="mt-1 block text-[11px] text-slate-500">{{ ago(o.hoursAgo) }}</span>
+            </span>
+          </li>
+        </ul>
+      </article>
     </div>
   </div>
 </template>

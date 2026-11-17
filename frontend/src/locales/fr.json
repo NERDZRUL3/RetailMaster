@@ -39,7 +39,30 @@
     "openMenu": "Ouvrir le menu",
     "closeMenu": "Fermer le menu",
     "searchProducts": "Chercher un produit ou scanner un code-barres",
-    "lowStockBadge": "{count} produit en stock bas | {count} produits en stock bas"
+    "lowStockBadge": "{count} produit en stock bas | {count} produits en stock bas",
+    "tagline": "Gestion de magasin",
+    "currency": "Devise",
+    "account": "Compte",
+    "messagesSoon": "Messages (bientôt)",
+    "notifications": "{count} notification | {count} notifications",
+    "items": {
+      "dashboard": "Tableau de bord",
+      "shop": "Mon magasin",
+      "products": "Produits",
+      "categories": "Catégories",
+      "inventory": "Stock",
+      "orders": "Commandes",
+      "suppliers": "Fournisseurs",
+      "purchaseOrders": "Bons de commande",
+      "returns": "Retours",
+      "reports": "Rapports",
+      "settings": "Paramètres"
+    },
+    "pos": {
+      "title": "Caisse",
+      "body": "Encaissez les ventes au comptoir avec le lecteur de codes-barres. Bientôt disponible.",
+      "open": "Ouvrir la caisse"
+    }
   },
   "common": {
     "notConnected": "Pas encore connecté",
@@ -172,6 +195,54 @@
       "type": "Type",
       "items": "Articles",
       "total": "Total"
+    }
+  },
+  "soon": {
+    "body": "Cette section arrive bientôt. Elle apparaîtra ici dès qu’elle sera prête.",
+    "back": "Retour au tableau de bord"
+  },
+  "dash": {
+    "sample": "Données d’exemple : les chiffres viendront de vos magasins une fois connectés",
+    "orders": "Commandes récentes",
+    "lastMonth": "{value} le mois dernier",
+    "customers": "Clients",
+    "currentCustomers": "Clients actuels",
+    "newCustomers": "Nouveaux ce mois",
+    "vsLastMonth": "vs mois dernier",
+    "byShop": "Par magasin",
+    "revenue": "Chiffre d’affaires",
+    "revenueWeek": "Chiffre d’affaires des 7 derniers jours",
+    "thisWeek": "Cette semaine",
+    "lastWeek": "Semaine dernière",
+    "topCategories": "Meilleures catégories",
+    "filtersSoon": "Filtres (bientôt)",
+    "range": "Période",
+    "ranges": {
+      "all": "Tout",
+      "weekly": "Semaine",
+      "monthly": "Mois"
+    },
+    "totalOrders": "Total des commandes",
+    "income": "Recettes",
+    "profit": "Bénéfice",
+    "total": "Total",
+    "hours": "Ventes par heure",
+    "productSales": "Ventes par produit",
+    "recentOrders": "Commandes récentes",
+    "col": {
+      "item": "Article",
+      "stock": "Stock",
+      "oldPrice": "Ancien prix",
+      "sale": "Remise",
+      "newPrice": "Nouveau prix",
+      "sold": "Vendus",
+      "actions": "Actions"
+    },
+    "status": {
+      "delivered": "Livrée",
+      "processing": "En cours",
+      "shipped": "Expédiée",
+      "cancelled": "Annulée"
     }
   }
 }

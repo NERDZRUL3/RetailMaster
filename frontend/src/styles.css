@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* `dark:` follows the app's own light/dark choice (theme.ts), not only the device. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* The customer's brand colours. branding.ts overwrites both from Retail
    Settings; these values are only the fallback while the page loads. */
 :root {
@@ -12,6 +15,10 @@
   --glass: rgb(255 255 255 / 0.72);
   --hairline: rgb(0 0 0 / 0.08);
   --row-hover: rgb(0 0 0 / 0.025);
+
+  /* Highlighted card (brand tinted) */
+  --accent-card: linear-gradient(160deg, color-mix(in srgb, var(--brand) 22%, white), color-mix(in srgb, var(--brand) 8%, white));
+  --accent-inner: rgb(255 255 255 / 0.65);
 }
 
 @theme {
@@ -38,6 +45,10 @@
   /* Tints for selected and highlighted backgrounds. */
   --color-brand-50: color-mix(in srgb, var(--brand) 10%, white);
   --color-brand-100: color-mix(in srgb, var(--brand) 18%, white);
+  /* Soft companion tone for charts (second series, bar bodies). */
+  --color-brand-200: color-mix(in srgb, var(--brand) 38%, white);
+  /* See-through tint behind selected items. */
+  --color-brand-tint: color-mix(in srgb, var(--brand) 13%, transparent);
   /* Readable shade: anything that carries white text. */
   --color-brand-600: var(--brand-strong);
   --color-brand-700: color-mix(in srgb, var(--brand-strong) 88%, black);
@@ -62,15 +73,17 @@ html {
   color-scheme: dark;
 
   --card-shadow: none;
-  --card-ring: rgb(255 255 255 / 0.06);
-  --glass: rgb(22 22 24 / 0.72);
+  --card-ring: rgb(255 255 255 / 0.07);
+  --glass: rgb(10 10 10 / 0.78);
   --hairline: rgb(255 255 255 / 0.1);
   --row-hover: rgb(255 255 255 / 0.04);
+  --accent-card: linear-gradient(160deg, color-mix(in srgb, var(--brand) 55%, #120804), color-mix(in srgb, var(--brand) 22%, #0e0704));
+  --accent-inner: rgb(0 0 0 / 0.28);
 
-  --color-white: #1c1c1e; /* cards, header, fields */
-  --color-slate-50: #000000; /* page background */
-  --color-slate-100: #2c2c2e;
-  --color-slate-200: #3a3a3c;
+  --color-white: #141414; /* cards, header, fields */
+  --color-slate-50: #0a0a0a; /* page background */
+  --color-slate-100: #222222;
+  --color-slate-200: #303030;
   --color-slate-300: #48484a;
   --color-slate-400: #8e8e93;
   --color-slate-500: #98989d;
@@ -90,9 +103,10 @@ html {
   --color-green-50: #0f2a1c;
   --color-green-800: #86efac;
 
-  --color-brand-50: color-mix(in srgb, var(--brand) 22%, #1c1c1e);
-  --color-brand-100: color-mix(in srgb, var(--brand) 32%, #1c1c1e);
-  --color-brand-ink: color-mix(in srgb, var(--brand) 55%, white);
+  --color-brand-50: color-mix(in srgb, var(--brand) 22%, #141414);
+  --color-brand-100: color-mix(in srgb, var(--brand) 32%, #141414);
+  --color-brand-ink: color-mix(in srgb, var(--brand) 80%, white);
+  --color-brand-tint: color-mix(in srgb, var(--brand) 16%, transparent);
 }
 
 /* Shared building blocks (Tailwind utilities). Pages use these instead of
@@ -112,7 +126,7 @@ html {
 
 /* Surfaces */
 @utility card {
-  @apply rounded-[22px] bg-white;
+  @apply rounded-2xl bg-white;
   box-shadow:
     var(--card-shadow),
     0 0 0 1px var(--card-ring);
@@ -237,6 +251,30 @@ html {
   }
 }
 
+/* Side menu entry; the current page gets a brand outline over a see-through
+   brand tint, in both themes. */
+@utility nav-item {
+  @apply flex items-center gap-3 rounded-xl border border-transparent px-3.5 py-2.5 text-[15px] text-slate-600 transition hover:bg-slate-100 hover:text-slate-900;
+  &[aria-current='page'] {
+    border-color: color-mix(in srgb, var(--brand) 70%, transparent);
+    background-color: var(--color-brand-tint);
+    color: var(--color-brand-ink);
+    font-weight: 500;
+  }
+}
+
+/* Brand-tinted highlight card */
+@utility accent-card {
+  @apply rounded-2xl;
+  background: var(--accent-card);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 45%, transparent);
+}
+
+/* Small square icon button in card headers */
+@utility icon-btn {
+  @apply grid h-8 w-8 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:pointer-events-none;
+}
+
 /* Clickable list row */
 @utility row {
   @apply transition-colors;
@@ -251,6 +289,14 @@ html {
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--hairline);
+}
+
+/* Hidden helper text for screen readers: pin it to the start edge so it can
+   never widen the page (in right-to-left it would otherwise sit past the
+   right edge). */
+.sr-only {
+  top: 0;
+  inset-inline-start: 0;
 }
 
 /* One visible focus style everywhere, for keyboard and scanner-driven use. */

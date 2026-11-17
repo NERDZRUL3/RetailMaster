@@ -162,7 +162,9 @@ def get_overview(period: str = "7d", shop: str | None = None) -> dict:
 
 @frappe.whitelist()
 def get_counts() -> dict:
-	"""Small numbers for the menu badges."""
+	"""Small numbers for the menu badges, and the currency the shops trade in."""
 	if frappe.session.user != "Administrator" and not INVENTORY_ROLES.intersection(frappe.get_roles()):
-		return {"low_stock": 0}
-	return {"low_stock": len(get_low_stock())}
+		return {"low_stock": 0, "currency": None}
+	shops = _shops()
+	currency = frappe.get_cached_value("Company", shops[0].company, "default_currency") if shops else None
+	return {"low_stock": len(get_low_stock()), "currency": currency}

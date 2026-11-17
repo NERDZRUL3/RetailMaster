@@ -206,7 +206,8 @@ const tooltip = computed(() => {
     </svg>
 
     <!-- The same figures as a table for screen readers. -->
-    <table class="sr-only">
+    <div class="sr-only">
+    <table>
       <caption>{{ label }}</caption>
       <tbody>
         <tr v-for="(bar, i) in bars" :key="bar.key">
@@ -215,5 +216,6 @@ const tooltip = computed(() => {
         </tr>
       </tbody>
     </table>
+    </div>
   </div>
 </template>

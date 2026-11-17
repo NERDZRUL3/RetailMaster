@@ -39,7 +39,30 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "searchProducts": "Search products or scan a barcode",
-    "lowStockBadge": "{count} product low on stock | {count} products low on stock"
+    "lowStockBadge": "{count} product low on stock | {count} products low on stock",
+    "tagline": "Retail management",
+    "currency": "Currency",
+    "account": "Account",
+    "messagesSoon": "Messages (coming soon)",
+    "notifications": "{count} notification | {count} notifications",
+    "items": {
+      "dashboard": "Dashboard",
+      "shop": "My shop",
+      "products": "Products",
+      "categories": "Categories",
+      "inventory": "Inventory",
+      "orders": "Orders",
+      "suppliers": "Suppliers",
+      "purchaseOrders": "Purchase orders",
+      "returns": "Returns",
+      "reports": "Reports",
+      "settings": "Settings"
+    },
+    "pos": {
+      "title": "Point of sale",
+      "body": "Ring up sales at the counter with the barcode scanner. Coming soon.",
+      "open": "Open point of sale"
+    }
   },
   "common": {
     "notConnected": "Not connected yet",
@@ -172,6 +195,54 @@
       "type": "Type",
       "items": "Items",
       "total": "Total"
+    }
+  },
+  "soon": {
+    "body": "This section is on its way. It will appear here as soon as it is ready.",
+    "back": "Back to the dashboard"
+  },
+  "dash": {
+    "sample": "Sample data: figures will come from your shops once connected",
+    "orders": "Recent orders",
+    "lastMonth": "{value} last month",
+    "customers": "Customers",
+    "currentCustomers": "Current customers",
+    "newCustomers": "New this month",
+    "vsLastMonth": "vs last month",
+    "byShop": "By shop",
+    "revenue": "Total revenue",
+    "revenueWeek": "Revenue over the last 7 days",
+    "thisWeek": "This week",
+    "lastWeek": "Last week",
+    "topCategories": "Top categories",
+    "filtersSoon": "Filters (coming soon)",
+    "range": "Period",
+    "ranges": {
+      "all": "All time",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "totalOrders": "Total orders",
+    "income": "Income",
+    "profit": "Profit",
+    "total": "Total",
+    "hours": "Sales by time of day",
+    "productSales": "Product sales",
+    "recentOrders": "Recent orders",
+    "col": {
+      "item": "Item",
+      "stock": "Stock",
+      "oldPrice": "Old price",
+      "sale": "Discount",
+      "newPrice": "New price",
+      "sold": "Items sold",
+      "actions": "Actions"
+    },
+    "status": {
+      "delivered": "Delivered",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "cancelled": "Cancelled"
     }
   }
 }

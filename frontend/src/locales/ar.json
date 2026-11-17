@@ -39,7 +39,30 @@
     "openMenu": "فتح القائمة",
     "closeMenu": "إغلاق القائمة",
     "searchProducts": "ابحث عن منتج أو امسح الرمز الشريطي",
-    "lowStockBadge": "{count} منتجات مخزونها منخفض"
+    "lowStockBadge": "{count} منتجات مخزونها منخفض",
+    "tagline": "إدارة المتاجر",
+    "currency": "العملة",
+    "account": "الحساب",
+    "messagesSoon": "الرسائل (قريبًا)",
+    "notifications": "{count} إشعارات",
+    "items": {
+      "dashboard": "لوحة التحكم",
+      "shop": "متجري",
+      "products": "المنتجات",
+      "categories": "الفئات",
+      "inventory": "المخزون",
+      "orders": "الطلبات",
+      "suppliers": "الموردون",
+      "purchaseOrders": "أوامر الشراء",
+      "returns": "المرتجعات",
+      "reports": "التقارير",
+      "settings": "الإعدادات"
+    },
+    "pos": {
+      "title": "نقطة البيع",
+      "body": "سجّل المبيعات عند الصندوق بقارئ الرمز الشريطي. قريبًا.",
+      "open": "فتح نقطة البيع"
+    }
   },
   "common": {
     "notConnected": "غير متصل بعد",
@@ -172,6 +195,54 @@
       "type": "النوع",
       "items": "القطع",
       "total": "المجموع"
+    }
+  },
+  "soon": {
+    "body": "هذا القسم قيد الإعداد وسيظهر هنا فور جاهزيته.",
+    "back": "العودة إلى لوحة التحكم"
+  },
+  "dash": {
+    "sample": "بيانات تجريبية: ستأتي الأرقام من متاجرك بعد الربط",
+    "orders": "الطلبات الأخيرة",
+    "lastMonth": "{value} الشهر الماضي",
+    "customers": "الزبائن",
+    "currentCustomers": "الزبائن الحاليون",
+    "newCustomers": "جدد هذا الشهر",
+    "vsLastMonth": "مقارنة بالشهر الماضي",
+    "byShop": "حسب المتجر",
+    "revenue": "إجمالي المداخيل",
+    "revenueWeek": "المداخيل خلال آخر 7 أيام",
+    "thisWeek": "هذا الأسبوع",
+    "lastWeek": "الأسبوع الماضي",
+    "topCategories": "أهم الفئات",
+    "filtersSoon": "عوامل التصفية (قريبًا)",
+    "range": "الفترة",
+    "ranges": {
+      "all": "الكل",
+      "weekly": "أسبوعي",
+      "monthly": "شهري"
+    },
+    "totalOrders": "إجمالي الطلبات",
+    "income": "المداخيل",
+    "profit": "الربح",
+    "total": "المجموع",
+    "hours": "المبيعات حسب الوقت",
+    "productSales": "مبيعات المنتجات",
+    "recentOrders": "الطلبات الأخيرة",
+    "col": {
+      "item": "المنتج",
+      "stock": "المخزون",
+      "oldPrice": "السعر القديم",
+      "sale": "التخفيض",
+      "newPrice": "السعر الجديد",
+      "sold": "المبيع",
+      "actions": "إجراءات"
+    },
+    "status": {
+      "delivered": "تم التسليم",
+      "processing": "قيد المعالجة",
+      "shipped": "تم الشحن",
+      "cancelled": "ملغاة"
     }
   }
 }
