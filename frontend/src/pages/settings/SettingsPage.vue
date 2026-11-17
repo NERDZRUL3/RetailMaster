@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { api, ApiError } from '@/api'
 import { applyBranding, type Branding, readableShade } from '@/branding'
 import RecoveryCodesCard from '@/components/RecoveryCodesCard.vue'
+import ShopsCard from '@/components/ShopsCard.vue'
 import { applyLocale, type Locale, LOCALES, pickLocale } from '@/i18n'
 
 interface SettingsPayload {
@@ -233,7 +234,8 @@ async function removeLogo() {
       </div>
     </form>
 
-    <div class="mt-6">
+    <div class="mt-6 grid gap-6">
+      <ShopsCard id="shops" />
       <RecoveryCodesCard />
     </div>
   </div>

@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 
 import { ApiError } from '@/api'
 import AppDialog from '@/components/AppDialog.vue'
+import { shopsApi } from '@/shops'
 import { type Account, type AccountForm, generatePassword, SHOP_TIERS, type Team, TIERS, usersApi } from '@/users'
 
 const { t, locale } = useI18n()
@@ -131,6 +132,25 @@ async function save() {
   }
 }
 
+// First shop, made from inside the dialog (only shown when there is none).
+const newShop = ref('')
+const creatingShop = ref(false)
+async function createShop() {
+  if (!newShop.value.trim() || creatingShop.value || !team.value) return
+  creatingShop.value = true
+  formError.value = ''
+  try {
+    const shop = await shopsApi.create(newShop.value)
+    team.value.shops = [...team.value.shops, { name: shop.name, shop_name: shop.shop_name }]
+    form.value?.shops.push(shop.name)
+    newShop.value = ''
+  } catch (err) {
+    formError.value = err instanceof ApiError ? err.message : String(err)
+  } finally {
+    creatingShop.value = false
+  }
+}
+
 const TIER_BADGE: Record<string, string> = {
   owner: 'badge-brand',
   partner: 'badge-neutral',
@@ -226,13 +246,36 @@ const TIER_BADGE: Record<string, string> = {
 
       <fieldset v-if="needsShops" class="mt-5">
         <legend class="label">{{ t('team.shops') }}</legend>
-        <div class="flex flex-wrap gap-2">
-          <label v-for="s in team?.shops ?? []" :key="s.name" class="flex items-center gap-2 rounded-full border border-[var(--hairline)] px-3 py-1.5 text-[14px]">
-            <input v-model="form.shops" type="checkbox" :value="s.name" class="h-4 w-4" />
-            {{ s.shop_name }}
+        <div v-if="team?.shops.length" class="flex flex-wrap gap-2">
+          <label
+            v-for="s in team.shops"
+            :key="s.name"
+            class="flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[14px] transition-colors"
+            :class="form.shops.includes(s.name) ? 'border-brand-600 bg-brand-tint text-brand-ink' : 'border-[var(--hairline)] text-slate-700'"
+          >
+            <input v-model="form.shops" type="checkbox" :value="s.name" class="check h-4 w-4" />
+            <bdi>{{ s.shop_name }}</bdi>
           </label>
         </div>
-        <p v-if="!form.shops.length" class="mt-2 text-[13px] text-red-600">{{ t('team.needShop') }}</p>
+        <!-- No shop exists yet: make the first one without leaving the dialog -->
+        <div v-else class="rounded-xl bg-amber-50 p-3">
+          <p class="text-[14px] text-amber-900">{{ t('team.noShopsYet') }}</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <input
+              v-model="newShop"
+              maxlength="140"
+              dir="auto"
+              class="field min-w-0 flex-1 bg-white text-[15px]"
+              :placeholder="t('shopSetup.namePlaceholder')"
+              :aria-label="t('shopSetup.name')"
+              @keydown.enter.prevent="createShop"
+            />
+            <button type="button" class="btn-primary" :disabled="!newShop.trim() || creatingShop" @click="createShop">
+              {{ creatingShop ? t('shopSetup.creating') : t('shopSetup.add') }}
+            </button>
+          </div>
+        </div>
+        <p v-if="team?.shops.length && !form.shops.length" class="mt-2 text-[13px] text-red-600">{{ t('team.needShop') }}</p>
       </fieldset>
 
       <div class="mt-5">

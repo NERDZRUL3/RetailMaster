@@ -647,7 +647,8 @@
     "offHint": "A switched-off account cannot sign in. Its sales and history stay.",
     "create": "Create account",
     "created": "Account for {name} created.",
-    "saved": "Account for {name} saved."
+    "saved": "Account for {name} saved.",
+    "noShopsYet": "There is no shop yet. Managers and cashiers work in a shop: create the first one here."
   },
   "recover": {
     "title": "Reset your password",
@@ -689,5 +690,20 @@
     "download": "Download",
     "print": "Print",
     "printHint": "Each code can be used once on the sign-in page (Forgot your password?). Keep this page somewhere safe."
+  },
+  "shopSetup": {
+    "title": "Shops",
+    "hint": "Each shop gets its own stock location. Managers and cashiers only see the shops you give them on the Team page.",
+    "none": "No shop yet. Add your first shop below.",
+    "noCompany": "Set up the company in ERPNext first (desk setup wizard), then add shops here.",
+    "name": "Shop name",
+    "namePlaceholder": "e.g. Downtown shop",
+    "company": "Company",
+    "add": "Add shop",
+    "creating": "Adding…",
+    "created": "{name} is ready.",
+    "off": "Off",
+    "switchOff": "Switch off",
+    "switchOn": "Switch on"
   }
 }

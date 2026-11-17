@@ -647,7 +647,8 @@
     "offHint": "Un compte désactivé ne peut plus se connecter. Ses ventes et son historique restent.",
     "create": "Créer le compte",
     "created": "Compte de {name} créé.",
-    "saved": "Compte de {name} enregistré."
+    "saved": "Compte de {name} enregistré.",
+    "noShopsYet": "Aucune boutique pour l’instant. Les gérants et caissiers travaillent dans une boutique : créez la première ici."
   },
   "recover": {
     "title": "Réinitialiser le mot de passe",
@@ -689,5 +690,20 @@
     "download": "Télécharger",
     "print": "Imprimer",
     "printHint": "Chaque code s’utilise une fois sur la page de connexion (Mot de passe oublié ?). Conservez cette feuille en lieu sûr."
+  },
+  "shopSetup": {
+    "title": "Boutiques",
+    "hint": "Chaque boutique a son propre emplacement de stock. Les gérants et caissiers ne voient que les boutiques que vous leur donnez dans la page Équipe.",
+    "none": "Aucune boutique pour l’instant. Ajoutez votre première boutique ci-dessous.",
+    "noCompany": "Configurez d’abord la société dans ERPNext (assistant de configuration du bureau), puis ajoutez les boutiques ici.",
+    "name": "Nom de la boutique",
+    "namePlaceholder": "ex. Boutique centre-ville",
+    "company": "Société",
+    "add": "Ajouter la boutique",
+    "creating": "Ajout…",
+    "created": "{name} est prête.",
+    "off": "Désactivée",
+    "switchOff": "Désactiver",
+    "switchOn": "Activer"
   }
 }
