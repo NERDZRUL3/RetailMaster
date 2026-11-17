@@ -5,22 +5,44 @@
 :root {
   --brand: #0f766e;
   --brand-strong: #0f766e;
+
+  /* Surfaces: soft shadow in light, hairline in dark. */
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 28px rgb(0 0 0 / 0.05);
+  --card-ring: transparent;
+  --glass: rgb(255 255 255 / 0.72);
+  --hairline: rgb(0 0 0 / 0.08);
+  --row-hover: rgb(0 0 0 / 0.025);
 }
 
 @theme {
-  --font-sans: 'Segoe UI', 'Noto Sans', 'Noto Sans Arabic', Tahoma, system-ui, sans-serif;
+  /* The device's own interface font: San Francisco on Apple devices, Segoe
+     UI Variable on Windows, Roboto on Android. Nothing is downloaded. */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', Roboto, 'Helvetica Neue',
+    'Noto Sans', 'Noto Sans Arabic', Tahoma, system-ui, sans-serif;
 
-  /* Exact brand colour: decorative accents only (rings, borders, bars). */
+  /* Neutral greys (no blue cast). Pages use the slate-* names. */
+  --color-slate-50: #f5f5f7; /* page background */
+  --color-slate-100: #ededf0; /* filled fields, chips, secondary buttons */
+  --color-slate-200: #e3e3e8;
+  --color-slate-300: #d2d2d7;
+  --color-slate-400: #a1a1a6;
+  --color-slate-500: #6e6e73; /* secondary text */
+  --color-slate-600: #515154;
+  --color-slate-700: #3a3a3c;
+  --color-slate-800: #2c2c2e;
+  --color-slate-900: #1d1d1f; /* primary text */
+
+  /* Exact brand colour: decorative accents only. */
   --color-brand: var(--brand);
-  /* Tint for selected and highlighted backgrounds. */
+  /* Tints for selected and highlighted backgrounds. */
   --color-brand-50: color-mix(in srgb, var(--brand) 10%, white);
-  --color-brand-100: color-mix(in srgb, var(--brand) 20%, white);
-  /* Readable shade: anything that carries white text, and brand-coloured text. */
+  --color-brand-100: color-mix(in srgb, var(--brand) 18%, white);
+  /* Readable shade: anything that carries white text. */
   --color-brand-600: var(--brand-strong);
-  --color-brand-700: color-mix(in srgb, var(--brand-strong) 85%, black);
-  --color-brand-800: color-mix(in srgb, var(--brand-strong) 70%, black);
-  /* Brand-coloured text (links, titles, active menu entry). */
-  --color-brand-ink: color-mix(in srgb, var(--brand-strong) 80%, black);
+  --color-brand-700: color-mix(in srgb, var(--brand-strong) 88%, black);
+  /* Brand-coloured text (links, active entries). */
+  --color-brand-ink: color-mix(in srgb, var(--brand-strong) 85%, black);
   /* Text on brand-filled buttons; stays white in both themes. */
   --color-on-brand: #ffffff;
 }
@@ -28,41 +50,38 @@
 html {
   color-scheme: light;
   background-color: var(--color-slate-50);
+  color: var(--color-slate-900);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Form fields without their own background use the card colour in both
-   themes (otherwise the browser's dark default is near-black). Utility
-   classes still override this. */
-@layer base {
-  input:not([type='checkbox']):not([type='radio']):not([type='color']),
-  select,
-  textarea {
-    background-color: var(--color-white);
-  }
-}
-
-/* Dark theme: theme.ts puts the `dark` class on <html>. Components keep
-   their light-theme class names; the neutral and status colours they use are
-   remapped here, so a page only needs `text-on-brand` and `text-brand-ink`
-   for the two brand cases. */
+/* Dark theme: theme.ts puts the `dark` class on <html>. Pages keep their
+   class names; the colours behind them change here. */
 :root.dark {
   color-scheme: dark;
 
-  --color-white: #182131; /* cards, header, inputs */
-  --color-slate-50: #0e1521; /* page background */
-  --color-slate-100: #222d3f;
-  --color-slate-200: #2c3a50;
-  --color-slate-300: #3d4d66;
-  --color-slate-400: #7c8aa3;
-  --color-slate-500: #94a3b8;
-  --color-slate-600: #b4c0d2;
-  --color-slate-700: #cbd5e1;
-  --color-slate-800: #e2e8f0;
-  --color-slate-900: #f1f5f9;
+  --card-shadow: none;
+  --card-ring: rgb(255 255 255 / 0.06);
+  --glass: rgb(22 22 24 / 0.72);
+  --hairline: rgb(255 255 255 / 0.1);
+  --row-hover: rgb(255 255 255 / 0.04);
+
+  --color-white: #1c1c1e; /* cards, header, fields */
+  --color-slate-50: #000000; /* page background */
+  --color-slate-100: #2c2c2e;
+  --color-slate-200: #3a3a3c;
+  --color-slate-300: #48484a;
+  --color-slate-400: #8e8e93;
+  --color-slate-500: #98989d;
+  --color-slate-600: #c7c7cc;
+  --color-slate-700: #d1d1d6;
+  --color-slate-800: #e5e5ea;
+  --color-slate-900: #f5f5f7;
 
   --color-red-50: #3a1418;
-  --color-red-700: #fca5a5;
-  --color-red-800: #fecaca;
+  --color-red-700: #ff8a80;
+  --color-red-800: #ffb4ab;
   --color-amber-50: #33270d;
   --color-amber-100: #45330e;
   --color-amber-200: #6b4d12;
@@ -71,13 +90,177 @@ html {
   --color-green-50: #0f2a1c;
   --color-green-800: #86efac;
 
-  --color-brand-50: color-mix(in srgb, var(--brand) 22%, #182131);
-  --color-brand-100: color-mix(in srgb, var(--brand) 32%, #182131);
+  --color-brand-50: color-mix(in srgb, var(--brand) 22%, #1c1c1e);
+  --color-brand-100: color-mix(in srgb, var(--brand) 32%, #1c1c1e);
   --color-brand-ink: color-mix(in srgb, var(--brand) 55%, white);
+}
+
+/* Shared building blocks (Tailwind utilities). Pages use these instead of
+   long class lists, so the whole interface changes from here. */
+@utility page-title {
+  @apply text-[28px] leading-tight font-semibold tracking-tight text-slate-900 sm:text-[34px];
+}
+@utility page-subtitle {
+  @apply mt-1.5 text-[17px] leading-snug text-slate-500;
+}
+@utility section-title {
+  @apply text-[19px] font-semibold tracking-tight text-slate-900;
+}
+@utility hint {
+  @apply text-[13px] leading-snug text-slate-500;
+}
+
+/* Surfaces */
+@utility card {
+  @apply rounded-[22px] bg-white;
+  box-shadow:
+    var(--card-shadow),
+    0 0 0 1px var(--card-ring);
+}
+@utility card-pad {
+  @apply card p-6 sm:p-7;
+}
+/* Inset grouped list, like settings lists on a phone */
+@utility list {
+  @apply card overflow-hidden;
+  & > * + * {
+    border-top: 1px solid var(--hairline);
+  }
+}
+
+/* Form fields: filled, no border; a soft brand ring shows focus. */
+@utility label {
+  @apply mb-1.5 block text-[13px] font-medium text-slate-500;
+}
+@utility field {
+  @apply w-full rounded-xl border-0 bg-slate-100 px-4 py-3 text-[17px] text-slate-900 transition outline-none placeholder:text-slate-400;
+  &:focus {
+    background-color: var(--color-white);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 35%, transparent);
+  }
+  &:focus-visible {
+    outline: none;
+  }
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--color-slate-500);
+    opacity: 0.7;
+  }
+  &:is(select) {
+    cursor: pointer;
+    appearance: none;
+    padding-inline-end: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%238e8e93'%3E%3Cpath d='M5.5 7.5 10 12l4.5-4.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: 1.1rem;
+    background-position: right 0.9rem center;
+  }
+  :where([dir='rtl']) &:is(select) {
+    background-position: left 0.9rem center;
+  }
+}
+@utility check {
+  @apply h-[18px] w-[18px] cursor-pointer accent-brand-600;
+}
+
+/* Buttons: pill shaped */
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[15px] font-medium whitespace-nowrap transition select-none active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+}
+@utility btn-lg {
+  @apply px-7 py-3.5 text-[17px];
+}
+@utility btn-primary {
+  @apply btn bg-brand-600 text-on-brand hover:bg-brand-700;
+}
+@utility btn-secondary {
+  @apply btn bg-slate-100 text-slate-900 hover:bg-slate-200;
+}
+@utility btn-quiet {
+  @apply btn px-3 text-brand-ink hover:bg-brand-50;
+}
+@utility btn-danger {
+  @apply btn px-3 text-red-700 hover:bg-red-50;
+}
+@utility link {
+  @apply font-medium text-brand-ink hover:underline;
+}
+
+/* Small labels */
+@utility badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-medium;
+}
+@utility badge-neutral {
+  @apply badge bg-slate-100 text-slate-600;
+}
+@utility badge-warn {
+  @apply badge bg-amber-100 text-amber-900;
+}
+
+/* Messages */
+@utility notice {
+  @apply rounded-2xl px-5 py-3.5 text-[15px] leading-snug;
+}
+@utility notice-info {
+  @apply notice bg-slate-100 text-slate-700;
+}
+@utility notice-warn {
+  @apply notice bg-amber-50 text-amber-900;
+}
+@utility notice-ok {
+  @apply notice bg-green-50 text-green-800;
+}
+@utility notice-error {
+  @apply notice bg-red-50 text-red-800;
+}
+
+/* Segmented control (theme and language switchers) */
+@utility segmented {
+  @apply inline-flex rounded-full bg-slate-100 p-1;
+}
+@utility segment {
+  @apply grid h-7 min-w-8 place-items-center rounded-full px-2.5 text-[13px] font-medium text-slate-500 transition hover:text-slate-900;
+  &[aria-pressed='true'] {
+    background-color: var(--color-white);
+    color: var(--color-slate-900);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  }
+}
+
+/* Main menu entries */
+@utility nav-link {
+  @apply rounded-full px-3.5 py-1.5 text-[14px] whitespace-nowrap text-slate-500 transition hover:text-slate-900;
+  &.router-link-active {
+    background-color: var(--color-slate-100);
+    color: var(--color-slate-900);
+    font-weight: 500;
+  }
+}
+
+/* Clickable list row */
+@utility row {
+  @apply transition-colors;
+  &:hover {
+    background-color: var(--row-hover);
+  }
+}
+
+/* Frosted header */
+@utility glass {
+  background-color: var(--glass);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--hairline);
 }
 
 /* One visible focus style everywhere, for keyboard and scanner-driven use. */
 :focus-visible {
   outline: 2px solid var(--brand-strong);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }

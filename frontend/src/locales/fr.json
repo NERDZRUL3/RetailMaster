@@ -32,7 +32,8 @@
     "overview": "Vue d'ensemble",
     "myShop": "Mon magasin",
     "settings": "Paramètres",
-    "products": "Produits"
+    "products": "Produits",
+    "home": "Accueil"
   },
   "common": {
     "notConnected": "Pas encore connecté",
@@ -91,7 +92,7 @@
     "title": "Produits",
     "subtitle": "Votre catalogue et le stock de chaque magasin.",
     "new": "Nouveau produit",
-    "back": "← Tous les produits",
+    "back": "Tous les produits",
     "searchPlaceholder": "Scannez un code-barres ou cherchez par nom ou code",
     "shop": "Magasin",
     "allShops": "Tous mes magasins",

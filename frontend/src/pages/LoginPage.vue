@@ -33,30 +33,29 @@ async function submit() {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-8">
-    <div class="w-full max-w-sm">
-      <div class="mb-4 flex justify-end gap-2">
-        <ThemeSwitcher />
-        <LanguageSwitcher />
-      </div>
+  <div class="flex min-h-screen flex-col px-5 py-6">
+    <div class="flex justify-end gap-2">
+      <ThemeSwitcher />
+      <LanguageSwitcher />
+    </div>
 
-      <div class="mb-6 flex flex-col items-center text-center">
+    <div class="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center py-10">
+      <div class="flex flex-col items-center text-center">
         <img
           v-if="branding.logo"
           :src="branding.logo"
           :alt="branding.app_name"
-          class="h-28 w-28 rounded-full bg-white object-contain shadow-sm ring-1 ring-slate-200"
+          class="h-24 w-24 rounded-full bg-white object-contain shadow-[0_8px_30px_rgb(0_0_0/0.12)]"
         />
-        <p class="mt-3 text-xl font-semibold text-brand-ink">
+        <p class="mt-4 text-[15px] font-medium text-slate-500">
           <bdi>{{ branding.app_name }}</bdi>
         </p>
+        <h1 class="mt-1 text-[32px] leading-tight font-semibold tracking-tight text-slate-900">{{ t('auth.title') }}</h1>
+        <p class="mt-2 text-[15px] text-slate-500">{{ t('auth.subtitle') }}</p>
       </div>
 
-      <form class="rounded-xl border border-t-4 border-slate-200 border-t-brand bg-white p-6 shadow-sm" @submit.prevent="submit">
-        <h1 class="text-xl font-semibold text-slate-900">{{ t('auth.title') }}</h1>
-        <p class="mt-1 text-sm text-slate-500">{{ t('auth.subtitle') }}</p>
-
-        <label class="mt-5 block text-sm font-medium text-slate-700" for="login-email">{{ t('auth.email') }}</label>
+      <form class="card-pad mt-8" @submit.prevent="submit">
+        <label class="label" for="login-email">{{ t('auth.email') }}</label>
         <input
           id="login-email"
           v-model="email"
@@ -64,12 +63,10 @@ async function submit() {
           dir="ltr"
           required
           autocomplete="username"
-          class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base text-slate-900"
+          class="field"
         />
 
-        <label class="mt-4 block text-sm font-medium text-slate-700" for="login-password">
-          {{ t('auth.password') }}
-        </label>
+        <label class="label mt-4" for="login-password">{{ t('auth.password') }}</label>
         <input
           id="login-password"
           v-model="password"
@@ -77,18 +74,12 @@ async function submit() {
           dir="ltr"
           required
           autocomplete="current-password"
-          class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base text-slate-900"
+          class="field"
         />
 
-        <p v-if="errorKey" class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-          {{ t(errorKey) }}
-        </p>
+        <p v-if="errorKey" class="notice-error mt-4" role="alert">{{ t(errorKey) }}</p>
 
-        <button
-          type="submit"
-          :disabled="busy"
-          class="mt-5 w-full rounded-lg bg-brand-600 px-4 py-2.5 text-base font-semibold text-on-brand hover:bg-brand-700 disabled:opacity-60"
-        >
+        <button type="submit" :disabled="busy" class="btn-primary btn-lg mt-6 w-full">
           {{ busy ? t('auth.signingIn') : t('auth.signIn') }}
         </button>
       </form>

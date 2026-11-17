@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import BrandName from '@/components/BrandName.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
@@ -10,6 +10,10 @@ import { logout, session } from '@/session'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
+
+// Highlight the entry for its own page and its sub-pages (/products/<code>).
+const isActive = (to: string) => route.path === to || route.path.startsWith(`${to}/`)
 
 // Each kind of user only gets the menu entries they can use.
 const navigation = computed(() => {
@@ -31,45 +35,43 @@ async function signOut() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 text-slate-900">
-    <!-- Thin bar in the exact brand colour ties every page to the logo. -->
-    <header class="sticky top-0 z-10 border-t-4 border-b border-t-brand border-b-slate-200 bg-white">
-      <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-        <BrandName class="text-lg" />
+  <div class="min-h-screen">
+    <header class="glass relative z-20 sm:sticky sm:top-0">
+      <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 px-5 py-2.5">
+        <RouterLink to="/" class="shrink-0" :aria-label="t('nav.home')">
+          <BrandName class="text-[17px]" />
+        </RouterLink>
 
-        <nav class="order-last flex w-full gap-1 sm:order-none sm:w-auto" :aria-label="t('nav.main')">
+        <nav class="order-last -mx-1 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto" :aria-label="t('nav.main')">
           <RouterLink
             v-for="item in navigation"
             :key="item.to"
             :to="item.to"
-            class="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
-            active-class="bg-brand-50 text-brand-ink"
+            class="nav-link"
+            :class="{ 'router-link-active': isActive(item.to) }"
+            :aria-current="isActive(item.to) ? 'page' : undefined"
           >
             {{ item.label }}
           </RouterLink>
         </nav>
 
-        <div class="ms-auto flex items-center gap-3">
+        <div class="ms-auto flex items-center gap-2">
           <ThemeSwitcher />
           <LanguageSwitcher />
-          <div v-if="session.context" class="hidden text-end leading-tight sm:block">
-            <div class="text-sm font-medium" dir="auto">{{ session.context.full_name }}</div>
-            <div v-if="session.context.home" class="text-xs text-slate-500">
+          <div v-if="session.context" class="hidden ps-2 text-end leading-tight md:block">
+            <div class="text-[13px] font-medium text-slate-900" dir="auto">{{ session.context.full_name }}</div>
+            <div v-if="session.context.home" class="text-[12px] text-slate-500">
               {{ t(`roles.${session.context.home}`) }}
             </div>
           </div>
-          <button
-            type="button"
-            class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            @click="signOut"
-          >
+          <button type="button" class="btn-quiet py-1.5 text-[14px]" @click="signOut">
             {{ t('auth.signOut') }}
           </button>
         </div>
       </div>
     </header>
 
-    <main class="mx-auto max-w-6xl px-4 py-6">
+    <main class="mx-auto max-w-5xl px-5 pt-8 pb-16 sm:pt-12">
       <RouterView />
     </main>
   </div>

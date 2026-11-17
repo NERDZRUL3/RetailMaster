@@ -2,7 +2,7 @@
 import { branding } from '@/branding'
 
 withDefaults(defineProps<{ logoClass?: string; showName?: boolean }>(), {
-  logoClass: 'h-9 w-9',
+  logoClass: 'h-8 w-8 rounded-full bg-white',
   showName: true,
 })
 </script>

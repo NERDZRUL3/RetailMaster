@@ -32,7 +32,8 @@
     "overview": "Overview",
     "myShop": "My shop",
     "settings": "Settings",
-    "products": "Products"
+    "products": "Products",
+    "home": "Home"
   },
   "common": {
     "notConnected": "Not connected yet",
@@ -91,7 +92,7 @@
     "title": "Products",
     "subtitle": "Your catalogue and stock in each shop.",
     "new": "New product",
-    "back": "← All products",
+    "back": "All products",
     "searchPlaceholder": "Scan a barcode or search by name or code",
     "shop": "Shop",
     "allShops": "All my shops",

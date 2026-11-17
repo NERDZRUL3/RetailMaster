@@ -121,65 +121,49 @@ async function removeLogo() {
 
 <template>
   <div class="mx-auto max-w-3xl">
-    <h1 class="text-2xl font-semibold text-slate-900">{{ t('settings.title') }}</h1>
-    <p class="mt-1 text-sm text-slate-500">{{ t('settings.subtitle') }}</p>
+    <h1 class="page-title">{{ t('settings.title') }}</h1>
+    <p class="page-subtitle">{{ t('settings.subtitle') }}</p>
 
     <p
       v-if="message"
-      class="mt-4 rounded-lg px-4 py-3 text-sm"
-      :class="message.kind === 'ok' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'"
+      class="mt-6"
+      :class="message.kind === 'ok' ? 'notice-ok' : 'notice-error'"
       role="status"
     >
       {{ message.text }}
     </p>
 
-    <form v-if="loaded" class="mt-6 space-y-6" @submit.prevent="save">
+    <form v-if="loaded" class="mt-8 space-y-6" @submit.prevent="save">
       <!-- Branding -->
-      <section class="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 class="text-lg font-semibold text-slate-900">{{ t('settings.branding') }}</h2>
+      <section class="card-pad">
+        <h2 class="section-title">{{ t('settings.branding') }}</h2>
 
-        <label class="mt-4 block text-sm font-medium text-slate-700" for="app-name">{{ t('settings.appName') }}</label>
-        <input
-          id="app-name"
-          v-model="form.app_name"
-          type="text"
-          dir="auto"
-          maxlength="140"
-          class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base"
-        />
-        <p class="mt-1 text-xs text-slate-500">{{ t('settings.appNameHint') }}</p>
+        <label class="label mt-5" for="app-name">{{ t('settings.appName') }}</label>
+        <input id="app-name" v-model="form.app_name" type="text" dir="auto" maxlength="140" class="field" />
+        <p class="hint mt-1.5">{{ t('settings.appNameHint') }}</p>
 
-        <div class="mt-5 text-sm font-medium text-slate-700">{{ t('settings.logo') }}</div>
-        <div class="mt-2 flex flex-wrap items-center gap-4">
-          <div class="flex h-20 w-20 items-center justify-center rounded-full bg-slate-50 ring-1 ring-slate-200">
-            <img v-if="form.logo" :src="form.logo" alt="" class="h-20 w-20 rounded-full object-contain" />
-            <span v-else class="px-2 text-center text-xs text-slate-400">{{ t('settings.noLogo') }}</span>
+        <div class="label mt-6">{{ t('settings.logo') }}</div>
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="grid h-20 w-20 place-items-center overflow-hidden rounded-full bg-slate-100">
+            <img v-if="form.logo" :src="form.logo" alt="" class="h-20 w-20 rounded-full bg-white object-contain" />
+            <span v-else class="px-2 text-center text-[12px] text-slate-400">{{ t('settings.noLogo') }}</span>
           </div>
-          <label
-            class="cursor-pointer rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            :class="{ 'pointer-events-none opacity-60': busy }"
-          >
+          <label class="btn-secondary cursor-pointer" :class="{ 'pointer-events-none opacity-60': busy }">
             {{ busy === 'upload' ? t('settings.uploading') : form.logo ? t('settings.replaceLogo') : t('settings.uploadLogo') }}
             <input type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" @change="uploadLogo" />
           </label>
-          <button
-            v-if="form.logo"
-            type="button"
-            class="rounded-lg px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
-            :disabled="!!busy"
-            @click="removeLogo"
-          >
+          <button v-if="form.logo" type="button" class="btn-danger" :disabled="!!busy" @click="removeLogo">
             {{ t('settings.removeLogo') }}
           </button>
         </div>
-        <p class="mt-2 text-xs text-slate-500">{{ t('settings.logoHint') }}</p>
+        <p class="hint mt-2">{{ t('settings.logoHint') }}</p>
 
-        <label class="mt-5 block text-sm font-medium text-slate-700" for="brand-color">{{ t('settings.color') }}</label>
-        <div class="mt-1 flex items-center gap-3">
+        <label class="label mt-6" for="brand-color">{{ t('settings.color') }}</label>
+        <div class="flex items-center gap-3">
           <input
             v-model="form.brand_color"
             type="color"
-            class="h-11 w-14 cursor-pointer rounded-lg border border-slate-300 bg-white p-1"
+            class="h-12 w-14 cursor-pointer rounded-xl border-0 bg-slate-100 p-1.5"
             :aria-label="t('settings.color')"
           />
           <input
@@ -188,64 +172,51 @@ async function removeLogo() {
             type="text"
             dir="ltr"
             pattern="#[0-9a-fA-F]{6}"
-            class="w-32 rounded-lg border border-slate-300 px-3 py-2.5 font-mono text-base"
+            class="field w-36 font-mono"
           />
         </div>
-        <p class="mt-1 text-xs text-slate-500">{{ t('settings.colorHint') }}</p>
+        <p class="hint mt-1.5">{{ t('settings.colorHint') }}</p>
 
         <!-- Live preview with the colours as they will be applied. -->
-        <div class="mt-4 rounded-lg border border-slate-200 p-4" :style="{ borderTop: `4px solid ${form.brand_color}` }">
-          <div class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ t('settings.preview') }}</div>
-          <div class="mt-3 flex flex-wrap items-center gap-3">
-            <span class="inline-flex items-center gap-2 text-sm text-slate-600">
+        <div class="mt-5 rounded-2xl bg-slate-50 p-5">
+          <div class="text-[12px] font-medium tracking-wide text-slate-500 uppercase">{{ t('settings.preview') }}</div>
+          <div class="mt-3 flex flex-wrap items-center gap-4">
+            <span class="inline-flex items-center gap-2 text-[15px] text-slate-600">
               <span class="h-5 w-5 rounded-full" :style="{ backgroundColor: form.brand_color }" />
               {{ t('settings.accent') }}
             </span>
-            <span
-              class="rounded-lg px-4 py-2 text-sm font-semibold text-on-brand"
-              :style="{ backgroundColor: strongPreview }"
-            >
+            <span class="btn text-on-brand" :style="{ backgroundColor: strongPreview }">
               {{ t('settings.button') }}
             </span>
-            <span v-if="colorAdjusted" class="font-mono text-xs text-slate-500" dir="ltr">{{ strongPreview }}</span>
+            <span v-if="colorAdjusted" class="font-mono text-[12px] text-slate-500" dir="ltr">{{ strongPreview }}</span>
           </div>
         </div>
       </section>
 
       <!-- Languages -->
-      <section class="rounded-xl border border-slate-200 bg-white p-5">
-        <h2 class="text-lg font-semibold text-slate-900">{{ t('settings.languages') }}</h2>
-        <p class="mt-1 text-xs text-slate-500">{{ t('settings.languagesHint') }}</p>
-        <div class="mt-3 flex flex-wrap gap-4">
-          <label v-for="code in LOCALES" :key="code" class="inline-flex items-center gap-2 text-sm text-slate-700">
+      <section class="card-pad">
+        <h2 class="section-title">{{ t('settings.languages') }}</h2>
+        <p class="hint mt-1">{{ t('settings.languagesHint') }}</p>
+        <div class="mt-4 flex flex-wrap gap-x-6 gap-y-3">
+          <label v-for="code in LOCALES" :key="code" class="inline-flex items-center gap-2.5 text-[15px] text-slate-700">
             <input
               v-model="form.languages[code]"
               type="checkbox"
-              class="h-4 w-4 accent-brand-600"
+              class="check"
               :disabled="form.languages[code] && enabledLanguages.length === 1"
             />
             {{ t(`language.${code}`) }}
           </label>
         </div>
 
-        <label class="mt-4 block text-sm font-medium text-slate-700" for="default-language">
-          {{ t('settings.defaultLanguage') }}
-        </label>
-        <select
-          id="default-language"
-          v-model="form.default_language"
-          class="mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base"
-        >
+        <label class="label mt-6" for="default-language">{{ t('settings.defaultLanguage') }}</label>
+        <select id="default-language" v-model="form.default_language" class="field w-auto min-w-48">
           <option v-for="code in enabledLanguages" :key="code" :value="code">{{ t(`language.${code}`) }}</option>
         </select>
       </section>
 
       <div class="flex justify-end">
-        <button
-          type="submit"
-          :disabled="!!busy"
-          class="rounded-lg bg-brand-600 px-5 py-2.5 text-base font-semibold text-on-brand hover:bg-brand-700 disabled:opacity-60"
-        >
+        <button type="submit" :disabled="!!busy" class="btn-primary btn-lg">
           {{ busy === 'save' ? t('settings.saving') : t('settings.save') }}
         </button>
       </div>

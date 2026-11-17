@@ -16,27 +16,25 @@ const tiles = ['owner.salesToday', 'owner.cashRegisters', 'owner.lowStock', 'own
 
 <template>
   <div>
-    <h1 class="text-2xl font-semibold text-slate-900">{{ t('owner.title') }}</h1>
-    <p class="mt-1 text-sm text-slate-500">{{ t('owner.subtitle') }}</p>
+    <h1 class="page-title">{{ t('owner.title') }}</h1>
+    <p class="page-subtitle">{{ t('owner.subtitle') }}</p>
 
-    <p class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-      {{ t('owner.previewNote') }}
-    </p>
+    <p class="notice-info mt-6">{{ t('owner.previewNote') }}</p>
 
-    <section class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <div v-for="tile in tiles" :key="tile" class="rounded-xl border border-slate-200 bg-white p-4">
-        <div class="text-sm text-slate-500">{{ t(tile) }}</div>
-        <div class="mt-2 text-2xl font-semibold text-slate-300" aria-hidden="true">—</div>
-        <div class="mt-1 text-xs text-slate-400">{{ t('common.notConnected') }}</div>
+    <section class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div v-for="tile in tiles" :key="tile" class="card-pad">
+        <div class="text-[13px] font-medium text-slate-500">{{ t(tile) }}</div>
+        <div class="mt-3 text-[34px] leading-none font-semibold tracking-tight text-slate-300" aria-hidden="true">—</div>
+        <div class="mt-2 text-[12px] text-slate-400">{{ t('common.notConnected') }}</div>
       </div>
     </section>
 
-    <section class="mt-8">
-      <h2 class="text-lg font-semibold text-slate-900">{{ t('owner.shops') }}</h2>
-      <div v-if="shops.length" class="mt-3 grid gap-3 sm:grid-cols-2">
+    <section class="mt-12">
+      <h2 class="section-title">{{ t('owner.shops') }}</h2>
+      <div v-if="shops.length" class="mt-4 grid gap-4 sm:grid-cols-2">
         <ShopCard v-for="shop in shops" :key="shop.name" :shop="shop" />
       </div>
-      <p v-else class="mt-3 text-sm text-slate-500">{{ t('owner.noShops') }}</p>
+      <p v-else class="mt-3 text-[15px] text-slate-500">{{ t('owner.noShops') }}</p>
     </section>
   </div>
 </template>
