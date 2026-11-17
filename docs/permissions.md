@@ -63,11 +63,12 @@ Known limits:
   another shop's warehouse. Documents created by this app must always set
   the shop's warehouse and POS profile. Frappe's "Apply Strict User
   Permissions" setting closes this fully but is not enabled yet.
-- **Cashiers:** Retail Cashier has no ERPNext document permissions yet; they
-  arrive with the point of sale (M4). ERPNext's built-in "Desk User" role
-  lets any signed-in user list product codes (names only, for link fields).
-  Opening a product, prices, stock, costs or suppliers is refused (checked
-  over HTTP on 2026-11-16).
+- **Cashiers:** ERPNext needs read access to products, customers, accounts,
+  payment methods and the POS profile to post a sale, so cashiers can open
+  those records in ERPNext's back office (`/app`), including a product's
+  valuation rate. Prices, stock levels (Bin), stock ledger and suppliers stay
+  refused. Hiding costs from cashiers needs field-level permissions (not
+  done yet).
 
 ## ERPNext permissions given to the retail roles
 
@@ -75,17 +76,35 @@ Known limits:
 these as Custom DocPerms, the same records the Role Permissions Manager
 creates. It only adds rights, never removes them.
 
-| Doctype | Owner, Partner | Shop Manager |
-|---|---|---|
-| Item | read, write, create | read, write, create |
-| Item Price | read, write, create, delete | read, write, create, delete |
-| Brand | read, write, create | read |
-| Item Group, UOM, Price List | read | read |
-| Warehouse, Bin, Stock Ledger Entry | read | read (own shops via User Permissions) |
-| Sales Invoice | read | read (own shops: the invoice's warehouse is scoped by User Permissions) |
-| Stock Entry | Owner: read, write, create, submit · Partner: read | read, write, create, submit (own shops) |
-| Stock Entry Type | Owner: read | read |
-| Item Group (product groups and subgroups) | Owner: read, write, create, delete · Partner: read | read, write, create, delete |
+| Doctype | Owner, Partner | Shop Manager | Cashier |
+|---|---|---|---|
+| Item | read, write, create | read, write, create | read |
+| Item Price | read, write, create, delete | read, write, create, delete | none |
+| Brand | read, write, create | read | none |
+| Item Group, UOM | read | read | none |
+| Price List | read | read | read |
+| Warehouse, Bin, Stock Ledger Entry | read | read (own shops via User Permissions) | none |
+| Sales Invoice | Owner: read, write, create, submit · Partner: read | read, write, create, submit (own shops: the invoice's warehouse and POS profile are scoped by User Permissions) | same as manager |
+| Customer, Account, Mode of Payment, POS Profile | Owner: read | read | read |
+| Stock Entry | Owner: read, write, create, submit · Partner: read | read, write, create, submit (own shops) | none |
+| Stock Entry Type | Owner: read | read | none |
+| Item Group (product groups and subgroups) | Owner: read, write, create, delete · Partner: read | read, write, create, delete | none |
+
+The point of sale (`retail_management.api.pos`) posts each sale as a
+submitted Sales Invoice (POS, stock updated) on the shop's POS profile and
+warehouse. Owners, managers and cashiers may sell; managers and cashiers
+only in their own shops (checked by the API and again by User Permissions).
+Partners are refused. Prices come from the POS profile's price list and
+ERPNext pricing rules; a price sent by the browser is ignored. Payment must
+cover the total, and only cash may exceed it (the difference is the change).
+A `request_id` makes a double click or retry return the first sale.
+
+Each shop gets its POS profile on its first sale
+(`services/pos_profile.py`): the shop's warehouse, the default selling price
+list, a "Walk-in Customer", Cash (default) and Credit Card when the company
+has an account for them, rounding off. The owner may change it in ERPNext.
+Sales do not need a POS opening entry; till sessions (opening float,
+closing count) are not built yet.
 
 Product groups are shared by all shops (`retail_management.api.categories`):
 groups sit under the root category, subgroups under a group (two levels).
@@ -126,6 +145,10 @@ purchasing, sales and POS documents). Tested in `test_inventory_api.py`.
   name, per-shop stock and low stock, product create and edit, duplicate
   barcodes, other shops' reorder rules kept, cashier refused, manager with no
   shop blocked.
+- `tests/test_pos_api.py` (7 tests): a sale takes stock out of the right
+  shop once, change on cash, prices from ERPNext, underpayment and unknown
+  payment methods refused, staff limited to their shops, partner refused,
+  receipt reprint scoped by shop.
 - `tests/test_dashboard_api.py` (10 tests): overview figures net of returns,
   comparison with the previous period, daily and monthly series split by
   shop, latest sales, manager limited to own shop, cashier refused.

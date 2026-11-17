@@ -24,10 +24,9 @@ const shops = computed(() => session.context?.shops ?? [])
         <ShopCard v-for="shop in shops" :key="shop.name" :shop="shop" />
       </div>
 
-      <button type="button" disabled class="btn-primary btn-lg mt-8 w-full py-4">
+      <RouterLink v-if="session.context?.can_sell" to="/pos" class="btn-primary btn-lg mt-8 w-full py-4">
         {{ t('shop.openPos') }}
-      </button>
-      <p class="hint mt-3 text-center">{{ t('shop.posSoon') }}</p>
+      </RouterLink>
     </template>
 
     <p v-else class="notice-warn mt-8">{{ t('shop.noShop') }}</p>

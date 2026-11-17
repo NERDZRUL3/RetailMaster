@@ -30,11 +30,25 @@ _RECEIVING = {"Stock Entry": "rwcs", "Stock Entry Type": "r"}
 # Product categories (Item Group tree) are shared by all shops; owners and
 # managers maintain them like the rest of the catalogue.
 _CATEGORIES = {"Item Group": "rwcd"}
+# Point of sale (api/pos.py): a sale is a submitted POS Sales Invoice in the
+# shop's warehouse. User Permissions on warehouse and POS profile keep
+# managers and cashiers to their own shops. Product lookups go through the
+# API, so cashiers get no direct rights on products, prices or stock.
+# ERPNext checks read access to the receivable and payment accounts it posts to.
+_SELLING = {
+	"Sales Invoice": "rwcs",
+	"Account": "r",
+	"Customer": "r",
+	"Item": "r",
+	"POS Profile": "r",
+	"Mode of Payment": "r",
+	"Price List": "r",
+}
 ERPNEXT_PERMISSIONS = {
-	ROLE_OWNER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, **_RECEIVING, **_CATEGORIES, "Brand": "rwc"},
+	ROLE_OWNER: {**_CATALOGUE_AND_STOCK, **_RECEIVING, **_CATEGORIES, **_SELLING, "Brand": "rwc"},
 	ROLE_PARTNER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, "Stock Entry": "r", "Brand": "rwc"},
-	ROLE_MANAGER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, **_RECEIVING, **_CATEGORIES},
-	# Cashiers get ERPNext permissions with the point of sale (M4).
+	ROLE_MANAGER: {**_CATALOGUE_AND_STOCK, **_RECEIVING, **_CATEGORIES, **_SELLING},
+	ROLE_CASHIER: {**_SELLING},
 }
 _FLAG_TO_PTYPE = {
 	"r": ("read", "report"),

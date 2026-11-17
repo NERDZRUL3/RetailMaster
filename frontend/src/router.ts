@@ -12,6 +12,8 @@ declare module 'vue-router' {
     settings?: boolean
     /** Only for users who may receive stock (owners, managers). */
     receive?: boolean
+    /** Only for users who may sell at the till (owners, managers, cashiers). */
+    sell?: boolean
   }
 }
 
@@ -34,6 +36,11 @@ export const router = createRouter({
           path: 'shop',
           component: () => import('./pages/cashier/ShopHome.vue'),
           meta: { homes: ['manager', 'cashier'] },
+        },
+        {
+          path: 'pos',
+          component: () => import('./pages/pos/PosPage.vue'),
+          meta: { sell: true },
         },
         {
           path: 'products',
@@ -118,6 +125,7 @@ router.beforeEach(async (to) => {
   if (to.meta.homes && !to.meta.homes.includes(context.home)) return homePath(context.home)
   if (to.meta.settings && !context.can_edit_settings) return homePath(context.home)
   if (to.meta.receive && !context.can_receive) return homePath(context.home)
+  if (to.meta.sell && !context.can_sell) return homePath(context.home)
   if (to.path === '/no-access') return homePath(context.home)
   return true
 })

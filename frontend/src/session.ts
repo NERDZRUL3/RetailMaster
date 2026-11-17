@@ -24,6 +24,8 @@ export interface SessionContext {
   can_edit_settings: boolean
   /** Owners and managers: may receive deliveries into their shops. */
   can_receive?: boolean
+  /** Owners, managers and cashiers: may sell at the till. */
+  can_sell?: boolean
   csrf_token: string
 }
 
@@ -36,7 +38,8 @@ export const session = reactive<{ loaded: boolean; context: SessionContext | nul
 
 export function homePath(home: Home | null | undefined): string {
   if (home === 'owner') return '/owner'
-  if (home === 'manager' || home === 'cashier') return '/shop'
+  if (home === 'cashier') return session.context?.can_sell ? '/pos' : '/shop'
+  if (home === 'manager') return '/shop'
   return '/no-access'
 }
 

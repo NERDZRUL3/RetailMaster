@@ -310,3 +310,56 @@ html {
     transition: none !important;
   }
 }
+
+/* Till receipt (components/PosReceipt.vue): hidden on screen; when printing,
+   only the receipt is printed, 80 mm wide. */
+.print-area {
+  display: none;
+}
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 4mm;
+  }
+  body > *:not(.print-area) {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  .print-area {
+    display: block;
+  }
+}
+.receipt {
+  width: 72mm;
+  font: 12px/1.35 ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  color: #000;
+}
+.receipt table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.receipt td {
+  padding: 1px 0;
+  vertical-align: top;
+}
+.receipt hr {
+  border: 0;
+  border-top: 1px dashed #000;
+  margin: 6px 0;
+}
+.receipt-center {
+  text-align: center;
+}
+.receipt-end {
+  text-align: end;
+  white-space: nowrap;
+}
+.receipt-title {
+  font-size: 15px;
+}
+.receipt-total td {
+  font-weight: 700;
+  font-size: 14px;
+}

@@ -46,6 +46,7 @@ def get_context() -> dict:
 		"shops": get_my_shops() if home else [],
 		"can_edit_settings": bool(frappe.has_permission("Retail Settings", "write")),
 		"can_receive": _can_receive(),
+		"can_sell": _can_sell(),
 		"csrf_token": frappe.sessions.get_csrf_token(),
 	}
 
@@ -58,6 +59,13 @@ def set_language(language: str) -> str:
 
 	frappe.db.set_value("User", frappe.session.user, "language", language)
 	return language
+
+
+def _can_sell() -> bool:
+	"""Owners, managers and cashiers may use the point of sale."""
+	from retail_management.api.pos import can_sell
+
+	return can_sell()
 
 
 def _can_receive() -> bool:

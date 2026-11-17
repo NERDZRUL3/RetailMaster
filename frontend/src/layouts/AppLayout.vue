@@ -17,6 +17,7 @@ const route = useRoute()
 const ICONS: Record<string, string[]> = {
   dashboard: ['M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z'],
   shop: ['M4 10v9h16v-9M3 10l2-5h14l2 5M3 10h18M9 19v-5h6v5'],
+  pos: ['M4 4h16v10H4zM8 18h8M12 14v4M7 8h4'],
   products: ['M12 3 4 7v10l8 4 8-4V7l-8-4Z', 'm4 7 8 4 8-4M12 11v10'],
   categories: ['M4 5h7v14H4zM14 5h6v5h-6zM14 14h6v5h-6z'],
   receive: ['M3 7h11v9H3zM14 10h4l3 3v3h-7', 'M7 19.5h.01M17 19.5h.01M8.5 9.5 10 11l3-3'],
@@ -46,6 +47,7 @@ const lowStock = ref(0)
 const menu = computed<NavItem[]>(() => {
   const items: NavItem[] = []
   if (managesStock.value) items.push({ to: '/owner', key: 'dashboard' })
+  if (session.context?.can_sell) items.push({ to: '/pos', key: 'pos' })
   if (home.value !== 'owner') items.push({ to: '/shop', key: 'shop' })
   if (managesStock.value) {
     items.push(
@@ -203,18 +205,18 @@ async function signOut() {
       </nav>
 
       <!-- Point of sale card -->
-      <div v-if="home" class="mt-4 rounded-xl bg-slate-50 p-4">
+      <div v-if="session.context?.can_sell && route.path !== '/pos'" class="mt-4 rounded-xl bg-slate-50 p-4">
         <svg viewBox="0 0 24 24" class="h-6 w-6 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M4 4h16v10H4zM8 18h8M12 14v4M7 8h4" />
         </svg>
         <div class="mt-2 text-[16px] font-semibold text-slate-900">{{ t('nav.pos.title') }}</div>
         <p class="mt-1 text-[13px] leading-snug text-slate-500">{{ t('nav.pos.body') }}</p>
-        <button type="button" disabled class="btn-primary mt-3 w-full justify-between rounded-xl px-4">
+        <RouterLink to="/pos" class="btn-primary mt-3 w-full justify-between rounded-xl px-4">
           {{ t('nav.pos.open') }}
           <svg viewBox="0 0 24 24" class="h-4 w-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
             <path d="M5 12h14M13 6l6 6-6 6" />
           </svg>
-        </button>
+        </RouterLink>
       </div>
     </aside>
 

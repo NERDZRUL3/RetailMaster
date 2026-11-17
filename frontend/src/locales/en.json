@@ -57,11 +57,12 @@
       "returns": "Returns",
       "reports": "Reports",
       "settings": "Settings",
-      "receive": "Receive stock"
+      "receive": "Receive stock",
+      "pos": "Point of sale"
     },
     "pos": {
       "title": "Point of sale",
-      "body": "Ring up sales at the counter with the barcode scanner. Coming soon.",
+      "body": "Ring up sales at the counter with the barcode scanner.",
       "open": "Open point of sale"
     }
   },
@@ -85,8 +86,7 @@
     "yourShop": "Your shop",
     "yourShops": "Your shops",
     "noShop": "No shop is assigned to your account. Ask the owner to give you access.",
-    "openPos": "Open point of sale",
-    "posSoon": "The point of sale is not available yet."
+    "openPos": "Open point of sale"
   },
   "settings": {
     "title": "Settings",
@@ -311,5 +311,45 @@
     "moveTo": "Move {name} to another group",
     "confirmDelete": "Delete {name}?",
     "pageHint": "Groups and subgroups for your products, shared by all shops."
+  },
+  "pos": {
+    "title": "Point of sale",
+    "subtitle": "Scan, take payment, print the receipt.",
+    "shop": "Shop",
+    "scan": "Scan a barcode or search a product (F2)",
+    "noProducts": "No products to show.",
+    "notFound": "Nothing found for “{code}”.",
+    "noPrice": "{name} has no selling price yet.",
+    "noPriceShort": "No price",
+    "inStock": "{qty} in stock",
+    "today": "Today's sales",
+    "reprint": "Reprint",
+    "cart": "Cart",
+    "clear": "Clear",
+    "confirmClear": "Empty the cart?",
+    "empty": "Scan or tap a product to start a sale.",
+    "less": "One less {name}",
+    "more": "One more {name}",
+    "qty": "Quantity of {name}",
+    "lowStock": "Low stock",
+    "total": "Total",
+    "taxes": "Taxes",
+    "pay": "Take payment",
+    "method": "Payment method",
+    "cash": "Cash",
+    "card": "Card",
+    "tendered": "Cash received",
+    "change": "Change",
+    "cardHint": "Charge {total} on the card terminal, then confirm.",
+    "back": "Back",
+    "confirm": "Confirm payment",
+    "saving": "Saving…",
+    "paidTotal": "Paid {total}",
+    "giveChange": "Change to give",
+    "print": "Print receipt",
+    "newSale": "New sale",
+    "receiptNo": "Receipt {name}",
+    "servedBy": "Served by {name}",
+    "thanks": "Thank you!"
   }
 }

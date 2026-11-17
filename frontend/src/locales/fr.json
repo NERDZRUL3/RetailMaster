@@ -57,11 +57,12 @@
       "returns": "Retours",
       "reports": "Rapports",
       "settings": "Paramètres",
-      "receive": "Réception"
+      "receive": "Réception",
+      "pos": "Caisse"
     },
     "pos": {
       "title": "Caisse",
-      "body": "Encaissez les ventes au comptoir avec le lecteur de codes-barres. Bientôt disponible.",
+      "body": "Encaissez au comptoir avec le lecteur de codes-barres.",
       "open": "Ouvrir la caisse"
     }
   },
@@ -85,8 +86,7 @@
     "yourShop": "Votre magasin",
     "yourShops": "Vos magasins",
     "noShop": "Aucun magasin n'est attribué à votre compte. Demandez l'accès au propriétaire.",
-    "openPos": "Ouvrir la caisse",
-    "posSoon": "La caisse n'est pas encore disponible."
+    "openPos": "Ouvrir la caisse"
   },
   "settings": {
     "title": "Paramètres",
@@ -311,5 +311,45 @@
     "moveTo": "Déplacer {name} vers un autre groupe",
     "confirmDelete": "Supprimer {name} ?",
     "pageHint": "Groupes et sous-groupes de vos produits, communs à tous les magasins."
+  },
+  "pos": {
+    "title": "Caisse",
+    "subtitle": "Scannez, encaissez, imprimez le ticket.",
+    "shop": "Magasin",
+    "scan": "Scannez un code-barres ou cherchez un produit (F2)",
+    "noProducts": "Aucun produit à afficher.",
+    "notFound": "Rien trouvé pour « {code} ».",
+    "noPrice": "{name} n'a pas encore de prix de vente.",
+    "noPriceShort": "Sans prix",
+    "inStock": "{qty} en stock",
+    "today": "Ventes du jour",
+    "reprint": "Réimprimer",
+    "cart": "Panier",
+    "clear": "Vider",
+    "confirmClear": "Vider le panier ?",
+    "empty": "Scannez ou touchez un produit pour commencer une vente.",
+    "less": "Un {name} de moins",
+    "more": "Un {name} de plus",
+    "qty": "Quantité de {name}",
+    "lowStock": "Stock bas",
+    "total": "Total",
+    "taxes": "Taxes",
+    "pay": "Encaisser",
+    "method": "Mode de paiement",
+    "cash": "Espèces",
+    "card": "Carte",
+    "tendered": "Espèces reçues",
+    "change": "Monnaie",
+    "cardHint": "Débitez {total} sur le terminal de paiement, puis confirmez.",
+    "back": "Retour",
+    "confirm": "Valider le paiement",
+    "saving": "Enregistrement…",
+    "paidTotal": "Payé {total}",
+    "giveChange": "Monnaie à rendre",
+    "print": "Imprimer le ticket",
+    "newSale": "Nouvelle vente",
+    "receiptNo": "Ticket {name}",
+    "servedBy": "Servi par {name}",
+    "thanks": "Merci !"
   }
 }
