@@ -24,13 +24,22 @@ _CATALOGUE_AND_STOCK = {
 # Read-only sales figures for the overview dashboard. Managers only see their
 # own shops' invoices: the invoice's warehouse is scoped by User Permissions.
 _SALES_REPORTING = {"Sales Invoice": "r"}
+# Receiving stock posts Material Receipt stock entries into the shop's
+# warehouse; User Permissions keep managers to their own shops' warehouses.
+_RECEIVING = {"Stock Entry": "rwcs", "Stock Entry Type": "r"}
 ERPNEXT_PERMISSIONS = {
-	ROLE_OWNER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, "Brand": "rwc"},
-	ROLE_PARTNER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, "Brand": "rwc"},
-	ROLE_MANAGER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING},
+	ROLE_OWNER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, **_RECEIVING, "Brand": "rwc"},
+	ROLE_PARTNER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, "Stock Entry": "r", "Brand": "rwc"},
+	ROLE_MANAGER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, **_RECEIVING},
 	# Cashiers get ERPNext permissions with the point of sale (M4).
 }
-_FLAG_TO_PTYPE = {"r": ("read", "report"), "w": ("write",), "c": ("create",), "d": ("delete",)}
+_FLAG_TO_PTYPE = {
+	"r": ("read", "report"),
+	"w": ("write",),
+	"c": ("create",),
+	"d": ("delete",),
+	"s": ("submit",),
+}
 
 
 def ensure_roles():

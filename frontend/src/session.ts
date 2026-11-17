@@ -22,6 +22,8 @@ export interface SessionContext {
   home: Home | null
   shops: Shop[]
   can_edit_settings: boolean
+  /** Owners and managers: may receive deliveries into their shops. */
+  can_receive?: boolean
   csrf_token: string
 }
 

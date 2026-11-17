@@ -10,6 +10,8 @@ declare module 'vue-router' {
     homes?: Home[]
     /** Only for users who may edit the site's settings. */
     settings?: boolean
+    /** Only for users who may receive stock (owners, managers). */
+    receive?: boolean
   }
 }
 
@@ -42,6 +44,11 @@ export const router = createRouter({
           path: 'products/new',
           component: () => import('./pages/inventory/ProductEditor.vue'),
           meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'receive',
+          component: () => import('./pages/inventory/ReceivePage.vue'),
+          meta: { homes: ['owner', 'manager'], receive: true },
         },
         {
           path: 'products/:code',
@@ -111,6 +118,7 @@ router.beforeEach(async (to) => {
   if (!context.home) return to.path === '/no-access' ? true : '/no-access'
   if (to.meta.homes && !to.meta.homes.includes(context.home)) return homePath(context.home)
   if (to.meta.settings && !context.can_edit_settings) return homePath(context.home)
+  if (to.meta.receive && !context.can_receive) return homePath(context.home)
   if (to.path === '/no-access') return homePath(context.home)
   return true
 })

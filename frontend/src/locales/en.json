@@ -56,7 +56,8 @@
       "purchaseOrders": "Purchase orders",
       "returns": "Returns",
       "reports": "Reports",
-      "settings": "Settings"
+      "settings": "Settings",
+      "receive": "Receive stock"
     },
     "pos": {
       "title": "Point of sale",
@@ -249,5 +250,42 @@
     "sale": "Sale",
     "return": "Return",
     "openProduct": "Open {name}"
+  },
+  "receive": {
+    "title": "Receive stock",
+    "subtitle": "Scan a delivery into a shop’s stock.",
+    "shop": "Shop",
+    "scanLabel": "Scan or search, receiving into {shop}",
+    "scanPlaceholder": "Scan a barcode, or type a name and press Enter",
+    "pick": "Matching products",
+    "add": "Add",
+    "unknown": "No product has the barcode {code}.",
+    "create": "Create product",
+    "dismiss": "Dismiss",
+    "delivery": "This delivery",
+    "counts": "{lines} lines · {units} units",
+    "empty": "Nothing scanned yet. Each scan adds one unit; scan again to add more.",
+    "col": {
+      "product": "Product",
+      "inStock": "In stock",
+      "qty": "Quantity",
+      "cost": "Unit cost"
+    },
+    "less": "One less",
+    "more": "One more",
+    "qtyFor": "Quantity of {name}",
+    "costFor": "Unit cost of {name}",
+    "keepCost": "Current",
+    "remove": "Remove",
+    "removeLine": "Remove {name}",
+    "reference": "Supplier or delivery note",
+    "referenceHint": "e.g. Supplier name, delivery note number",
+    "value": "Value",
+    "costNote": "* Lines without a unit cost keep the product’s current cost.",
+    "submit": "Receive {units} units",
+    "saving": "Receiving…",
+    "done": "Received {units} units into {shop} ({name}).",
+    "history": "Recent deliveries",
+    "noHistory": "No deliveries received yet."
   }
 }

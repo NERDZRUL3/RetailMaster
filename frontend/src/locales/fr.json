@@ -56,7 +56,8 @@
       "purchaseOrders": "Bons de commande",
       "returns": "Retours",
       "reports": "Rapports",
-      "settings": "Paramètres"
+      "settings": "Paramètres",
+      "receive": "Réception"
     },
     "pos": {
       "title": "Caisse",
@@ -249,5 +250,42 @@
     "sale": "Vente",
     "return": "Retour",
     "openProduct": "Ouvrir {name}"
+  },
+  "receive": {
+    "title": "Réception de stock",
+    "subtitle": "Scannez une livraison dans le stock d’un magasin.",
+    "shop": "Magasin",
+    "scanLabel": "Scannez ou cherchez, réception dans {shop}",
+    "scanPlaceholder": "Scannez un code-barres, ou tapez un nom puis Entrée",
+    "pick": "Produits correspondants",
+    "add": "Ajouter",
+    "unknown": "Aucun produit n’a le code-barres {code}.",
+    "create": "Créer le produit",
+    "dismiss": "Ignorer",
+    "delivery": "Cette livraison",
+    "counts": "{lines} lignes · {units} unités",
+    "empty": "Rien de scanné pour l’instant. Chaque scan ajoute une unité ; scannez à nouveau pour en ajouter.",
+    "col": {
+      "product": "Produit",
+      "inStock": "En stock",
+      "qty": "Quantité",
+      "cost": "Coût unitaire"
+    },
+    "less": "Une de moins",
+    "more": "Une de plus",
+    "qtyFor": "Quantité de {name}",
+    "costFor": "Coût unitaire de {name}",
+    "keepCost": "Actuel",
+    "remove": "Retirer",
+    "removeLine": "Retirer {name}",
+    "reference": "Fournisseur ou bon de livraison",
+    "referenceHint": "ex. nom du fournisseur, numéro du bon",
+    "value": "Valeur",
+    "costNote": "* Les lignes sans coût unitaire gardent le coût actuel du produit.",
+    "submit": "Réceptionner {units} unités",
+    "saving": "Réception…",
+    "done": "{units} unités reçues dans {shop} ({name}).",
+    "history": "Livraisons récentes",
+    "noHistory": "Aucune livraison reçue pour l’instant."
   }
 }

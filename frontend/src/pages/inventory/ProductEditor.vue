@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api'
 import { type FormOptions, formatQty, inventoryApi, type Product } from '@/inventory'
@@ -9,6 +9,9 @@ import { type FormOptions, formatQty, inventoryApi, type Product } from '@/inven
 const props = defineProps<{ code?: string }>()
 const { t, locale } = useI18n()
 const router = useRouter()
+const route = useRoute()
+// Opened from receiving: ?barcode= to prefill, ?return= to go back after creating.
+const returnTo = typeof route.query.return === 'string' && route.query.return.startsWith('/') ? route.query.return : ''
 
 const isNew = computed(() => !props.code)
 const options = ref<FormOptions | null>(null)
@@ -58,6 +61,7 @@ onMounted(async () => {
     } else {
       form.item_group = options.value.default_item_group ?? ''
       form.stock_uom = options.value.default_uom
+      if (typeof route.query.barcode === 'string' && route.query.barcode) form.barcodes = [route.query.barcode]
     }
   } catch (err) {
     message.value = { kind: 'error', text: err instanceof ApiError ? err.message : String(err) }
@@ -99,7 +103,8 @@ async function save() {
     })
     fill(saved)
     message.value = { kind: 'ok', text: t('products.saved') }
-    if (isNew.value) await router.replace(`/products/${encodeURIComponent(saved.item_code)}`)
+    if (isNew.value && returnTo) await router.push({ path: returnTo, query: { added: saved.item_code } })
+    else if (isNew.value) await router.replace(`/products/${encodeURIComponent(saved.item_code)}`)
   } catch (err) {
     message.value = { kind: 'error', text: err instanceof ApiError ? err.message : String(err) }
   } finally {

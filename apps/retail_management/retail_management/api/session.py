@@ -45,6 +45,7 @@ def get_context() -> dict:
 		"home": home,
 		"shops": get_my_shops() if home else [],
 		"can_edit_settings": bool(frappe.has_permission("Retail Settings", "write")),
+		"can_receive": _can_receive(),
 		"csrf_token": frappe.sessions.get_csrf_token(),
 	}
 
@@ -57,3 +58,11 @@ def set_language(language: str) -> str:
 
 	frappe.db.set_value("User", frappe.session.user, "language", language)
 	return language
+
+
+def _can_receive() -> bool:
+	"""Owners and managers may receive stock; partners and cashiers may not."""
+	from retail_management.api.receiving import RECEIVE_ROLES
+
+	roles = set(frappe.get_roles())
+	return bool(RECEIVE_ROLES & roles) and bool(frappe.has_permission("Stock Entry", "create"))

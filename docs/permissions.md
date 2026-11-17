@@ -83,6 +83,15 @@ creates. It only adds rights, never removes them.
 | Item Group, UOM, Price List | read | read |
 | Warehouse, Bin, Stock Ledger Entry | read | read (own shops via User Permissions) |
 | Sales Invoice | read | read (own shops: the invoice's warehouse is scoped by User Permissions) |
+| Stock Entry | Owner: read, write, create, submit · Partner: read | read, write, create, submit (own shops) |
+| Stock Entry Type | Owner: read | read |
+
+Receiving stock (`retail_management.api.receiving`) posts a submitted
+Material Receipt into the shop's warehouse. Owners and managers may receive;
+managers only into their own shops (checked by the API and again by User
+Permissions on the warehouse). Partners and cashiers are refused. A
+`request_id` sent with each delivery makes a double click or network retry
+return the first receipt instead of receiving twice.
 
 The overview dashboard (`retail_management.api.dashboard`) reads submitted
 Sales Invoices whose source warehouse is one of the user's shops. Cashiers

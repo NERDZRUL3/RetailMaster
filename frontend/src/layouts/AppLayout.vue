@@ -19,6 +19,7 @@ const ICONS: Record<string, string[]> = {
   shop: ['M4 10v9h16v-9M3 10l2-5h14l2 5M3 10h18M9 19v-5h6v5'],
   products: ['M12 3 4 7v10l8 4 8-4V7l-8-4Z', 'm4 7 8 4 8-4M12 11v10'],
   categories: ['M4 5h7v14H4zM14 5h6v5h-6zM14 14h6v5h-6z'],
+  receive: ['M3 7h11v9H3zM14 10h4l3 3v3h-7', 'M7 19.5h.01M17 19.5h.01M8.5 9.5 10 11l3-3'],
   inventory: ['M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z', 'm8.5 11 3.5 3 3.5-3'],
   orders: ['M3 4h2l2.4 11h10.2L20 7.5H6.2', 'M9 19.5h.01M17 19.5h.01'],
   suppliers: ['M4 19V8l8-4 8 4v11', 'M8 19v-6h8v6M8 13h8'],
@@ -49,6 +50,7 @@ const menu = computed<NavItem[]>(() => {
   if (managesStock.value) {
     items.push(
       { to: '/products', key: 'products', badge: lowStock.value },
+      ...(session.context?.can_receive ? [{ to: '/receive', key: 'receive' }] : []),
       { to: '/categories', key: 'categories' },
       { to: '/inventory', key: 'inventory' },
       { to: '/orders', key: 'orders' },
