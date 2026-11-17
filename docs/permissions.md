@@ -86,6 +86,8 @@ creates. It only adds rights, never removes them.
 | Warehouse, Bin, Stock Ledger Entry | read | read (own shops via User Permissions) | none |
 | Sales Invoice | Owner: read, write, create, submit · Partner: read | read, write, create, submit (own shops: the invoice's warehouse and POS profile are scoped by User Permissions) | same as manager |
 | Customer, Account, Mode of Payment, POS Profile | Owner: read | read | read |
+| POS Opening Entry, POS Closing Entry | Owner: read, write, create, submit | read, write, create, submit (own shops via POS Profile) | same as manager |
+| Retail Cash Movement | Owner: read (created only through the API) | none (API) | none (API) |
 | Stock Entry | Owner: read, write, create, submit · Partner: read | read, write, create, submit (own shops) | none |
 | Stock Entry Type | Owner: read | read | none |
 | Item Group (product groups and subgroups) | Owner: read, write, create, delete · Partner: read | read, write, create, delete | none |
@@ -103,8 +105,28 @@ Each shop gets its POS profile on its first sale
 (`services/pos_profile.py`): the shop's warehouse, the default selling price
 list, a "Walk-in Customer", Cash (default) and Credit Card when the company
 has an account for them, rounding off. The owner may change it in ERPNext.
-Sales do not need a POS opening entry; till sessions (opening float,
-closing count) are not built yet.
+Till sessions (`retail_management.api.till`) use ERPNext's own POS Opening
+Entry and POS Closing Entry:
+
+- A sale needs the seller's own session on that till, opened today. One
+  open session per till and per person (ERPNext's rule), so only the person
+  who opened the till sells on it until it is closed.
+- Opening records the counted cash float; the last close's counted cash is
+  suggested.
+- Cash in and cash out (with a reason) are Retail Cash Movement records.
+  They change the cash expected in the drawer but post nothing in the
+  accounts. Taking out more cash than the drawer should hold is refused.
+- Closing is a blind count: the cashier enters what they count per payment
+  method, then sees expected amounts and differences, may recount, adds an
+  optional note (a comment on the closing entry) and closes. The closing
+  entry stores opening, expected, counted and difference per method.
+- While a session is open, staff who do not manage the shop do not get the
+  expected amounts from the API. The X report still shows opening, sales
+  and cash movements per method, so a careful cashier could add them up.
+- Owners and managers may close another person's session (forgotten till,
+  shift handover) and see every session of their shops' tills; cashiers see
+  their own.
+- A session opened on an earlier day must be closed before selling again.
 
 Product groups are shared by all shops (`retail_management.api.categories`):
 groups sit under the root category, subgroups under a group (two levels).
@@ -149,6 +171,11 @@ purchasing, sales and POS documents). Tested in `test_inventory_api.py`.
   shop once, change on cash, prices from ERPNext, underpayment and unknown
   payment methods refused, staff limited to their shops, partner refused,
   receipt reprint scoped by shop.
+- `tests/test_till_api.py` (5 tests): no sale without an open session;
+  float, sale, cash in and out, blind X report for the cashier, expected for
+  the manager, close with a shortfall, Z report, history and next float;
+  one person per till; manager closes a cashier's session; cashier cannot
+  close or read others' sessions; counts required.
 - `tests/test_dashboard_api.py` (10 tests): overview figures net of returns,
   comparison with the previous period, daily and monthly series split by
   shop, latest sales, manager limited to own shop, cashier refused.

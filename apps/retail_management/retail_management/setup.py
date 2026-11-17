@@ -43,6 +43,9 @@ _SELLING = {
 	"POS Profile": "r",
 	"Mode of Payment": "r",
 	"Price List": "r",
+	# Till sessions (api/till.py), scoped by User Permissions on POS Profile.
+	"POS Opening Entry": "rwcs",
+	"POS Closing Entry": "rwcs",
 }
 ERPNEXT_PERMISSIONS = {
 	ROLE_OWNER: {**_CATALOGUE_AND_STOCK, **_RECEIVING, **_CATEGORIES, **_SELLING, "Brand": "rwc"},

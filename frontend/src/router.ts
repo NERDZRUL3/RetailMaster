@@ -43,6 +43,11 @@ export const router = createRouter({
           meta: { sell: true },
         },
         {
+          path: 'pos/sessions',
+          component: () => import('./pages/pos/TillSessionsPage.vue'),
+          meta: { sell: true },
+        },
+        {
           path: 'products',
           component: () => import('./pages/inventory/ProductsPage.vue'),
           meta: { homes: ['owner', 'manager'] },

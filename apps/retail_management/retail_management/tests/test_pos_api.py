@@ -52,6 +52,39 @@ def make_pos_item(code: str, price: float | None, barcode: str | None = None) ->
 	return code
 
 
+def close_open_session(shop: str):
+	"""Close whatever session is open on the shop's till (as Administrator)."""
+	from retail_management.api import till
+
+	frappe.set_user("Administrator")
+	profile = frappe.db.get_value("Retail Shop", shop, "pos_profile")
+	info = till.session_info(profile) if profile else None
+	if info:
+		entry = frappe.get_doc("POS Opening Entry", info["name"])
+		till.close_session(shop, {row.mode_of_payment: 0 for row in entry.balance_details})
+
+
+def ensure_session(user: str, shop: str, cash: float = 0) -> dict:
+	"""Open the shop's till as user, closing other open sessions of the till
+	and of the user first. Leaves the user signed in."""
+	from retail_management.api import till
+
+	frappe.set_user("Administrator")
+	pos.ensure_shop_pos_profile(shop)
+	profile = frappe.db.get_value("Retail Shop", shop, "pos_profile")
+	info = till.session_info(profile)
+	if info and (info["user"] != user or info["outdated"]):
+		close_open_session(shop)
+	other = frappe.db.get_value(
+		"POS Opening Entry", {"user": user, "status": "Open", "docstatus": 1, "pos_profile": ("!=", profile)}, "pos_profile"
+	)
+	if other:
+		close_open_session(frappe.db.get_value("Retail Shop", {"pos_profile": other}, "name"))
+	frappe.clear_cache(user=user)
+	frappe.set_user(user)
+	return till.open_session(shop, cash)
+
+
 class TestPosApi(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -79,6 +112,10 @@ class TestPosApi(IntegrationTestCase):
 		for warehouse in (cls.wh_a, cls.wh_b):
 			receive_item(ITEM, warehouse, cls.company, 100)
 			receive_item(NO_PRICE_ITEM, warehouse, cls.company, 10)
+		# Selling needs the seller's open till session.
+		ensure_session(cls.cashier, SHOP_A)
+		ensure_session(cls.owner, SHOP_B)
+		frappe.set_user("Administrator")
 
 	def tearDown(self):
 		frappe.set_user("Administrator")

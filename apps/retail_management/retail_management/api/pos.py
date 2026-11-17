@@ -42,7 +42,10 @@ def _require_sell(shop: str) -> frappe._dict:
 
 def _profile(name: str) -> frappe._dict:
 	profile = frappe.db.get_value(
-		"POS Profile", name, ["name", "selling_price_list", "currency", "customer", "disabled"], as_dict=True
+		"POS Profile",
+		name,
+		["name", "selling_price_list", "currency", "customer", "disabled", "disable_rounded_total"],
+		as_dict=True,
 	)
 	if cint(profile.disabled):
 		frappe.throw(_("This shop's till is disabled."))
@@ -68,12 +71,17 @@ def _profile(name: str) -> frappe._dict:
 @frappe.whitelist()
 def get_till(shop: str) -> dict:
 	"""What the till screen needs for one shop."""
+	from retail_management.api.till import can_manage, last_closing_cash, session_info
+
 	shop_row = _require_sell(shop)
 	profile = _profile(shop_row.pos_profile)
 	return {
 		"shop": shop_row.name,
 		"shop_name": shop_row.shop_name,
 		"currency": profile.currency,
+		"session": session_info(profile.name),
+		"can_manage": can_manage(),
+		"last_cash": last_closing_cash(profile.name),
 		"payments": [
 			{"mode": row.mode_of_payment, "cash": row.type == "Cash", "default": cint(row.default)}
 			for row in profile.payments
@@ -195,7 +203,7 @@ def _sale(name: str) -> dict:
 			}
 			for row in doc.items
 		],
-		"total": flt(doc.grand_total),
+		"total": flt(doc.rounded_total) or flt(doc.grand_total),
 		"taxes": flt(doc.total_taxes_and_charges),
 		"discount": flt(doc.discount_amount),
 		"payments": [
@@ -256,6 +264,8 @@ def submit_sale(shop: str, lines: list | str, payments: list | str, request_id: 
 	"""Ring up a paid sale: stock leaves the shop and the receipt is returned.
 	Sending the same request_id twice (double click, network retry) returns
 	the first sale instead of selling twice."""
+	from retail_management.api.till import require_my_session
+
 	shop_row = _require_sell(shop)
 	profile = _profile(shop_row.pos_profile)
 
@@ -270,16 +280,21 @@ def submit_sale(shop: str, lines: list | str, payments: list | str, request_id: 
 			frappe.throw(_("This sale is already being saved."))
 
 	try:
+		require_my_session(profile.name)
 		invoice = frappe.get_doc(
 			{
 				"doctype": "Sales Invoice",
 				"company": shop_row.company,
 				"customer": profile.customer,
 				"is_pos": 1,
+				# Belongs to the seller's open till session (closed with it).
+				"is_created_using_pos": 1,
 				"pos_profile": profile.name,
 				"update_stock": 1,
 				"set_warehouse": shop_row.warehouse,
 				"selling_price_list": profile.selling_price_list,
+				# Follow the till's rounding setting (ERPNext rounds by default).
+				"disable_rounded_total": cint(profile.disable_rounded_total),
 				"items": [{**row, "warehouse": shop_row.warehouse} for row in _clean_lines(lines)],
 			}
 		)
@@ -290,7 +305,7 @@ def submit_sale(shop: str, lines: list | str, payments: list | str, request_id: 
 		invoice.set("payments", _clean_payments(payments, profile))
 		invoice.calculate_taxes_and_totals()
 
-		total = flt(invoice.grand_total)
+		total = flt(invoice.rounded_total) or flt(invoice.grand_total)
 		paid = sum(flt(row.amount) for row in invoice.payments)
 		non_cash = sum(
 			flt(row.amount)

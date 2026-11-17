@@ -18,8 +18,11 @@ import {
   saveCart,
   type Till,
 } from '@/pos'
+import AppDialog from '@/components/AppDialog.vue'
+import TillReport from '@/components/TillReport.vue'
 import { newRequestId } from '@/receiving'
 import { session } from '@/session'
+import { formatWhen, type SessionReport, tillApi } from '@/till'
 
 const { t, locale } = useI18n()
 
@@ -58,6 +61,132 @@ function focusScan() {
   nextTick(() => scanInput.value?.focus())
 }
 
+// ---- Till session -------------------------------------------------------
+const tillSession = computed(() => till.value?.session ?? null)
+/** Selling is possible: the user's own session, opened today. */
+const selling = computed(() => !!tillSession.value?.mine && !tillSession.value.outdated)
+const openingCash = ref<number | ''>('')
+
+async function openSession() {
+  if (!till.value || busy.value) return
+  busy.value = true
+  error.value = ''
+  try {
+    till.value.session = await tillApi.open(shop.value, Number(openingCash.value) || 0)
+    await Promise.all([search(), loadRecent()])
+    focusScan()
+  } catch (err) {
+    fail(err)
+  } finally {
+    busy.value = false
+  }
+}
+
+// Short confirmation messages
+const info = ref('')
+let infoTimer: ReturnType<typeof setTimeout> | undefined
+function showInfo(text: string) {
+  info.value = text
+  clearTimeout(infoTimer)
+  infoTimer = setTimeout(() => (info.value = ''), 4000)
+}
+
+// Cash in / cash out
+const moveOpen = ref(false)
+const moveType = ref<'In' | 'Out'>('Out')
+const moveAmount = ref<number | ''>('')
+const moveReason = ref('')
+function startMove(type: 'In' | 'Out') {
+  moveType.value = type
+  moveAmount.value = ''
+  moveReason.value = ''
+  error.value = ''
+  moveOpen.value = true
+}
+const moveValid = computed(() => Number(moveAmount.value) > 0 && moveReason.value.trim().length > 0)
+async function saveMove() {
+  if (!moveValid.value || busy.value) return
+  busy.value = true
+  try {
+    await tillApi.move(shop.value, moveType.value, Number(moveAmount.value), moveReason.value.trim())
+    moveOpen.value = false
+    showInfo(t(moveType.value === 'In' ? 'till.movedIn' : 'till.movedOut', { amount: money(Number(moveAmount.value)) }))
+  } catch (err) {
+    fail(err)
+    moveOpen.value = false
+  } finally {
+    busy.value = false
+  }
+}
+
+// X report
+const xReport = ref<SessionReport | null>(null)
+async function showX() {
+  try {
+    xReport.value = await tillApi.current(shop.value)
+  } catch (err) {
+    fail(err)
+  }
+}
+
+// Closing: count (blind), review the differences, close, Z report
+const view = ref<'sell' | 'close'>('sell')
+const closeStep = ref<'count' | 'review' | 'done'>('count')
+const counts = ref<Record<string, number | ''>>({})
+const closeNote = ref('')
+const closeReport = ref<SessionReport | null>(null)
+function startClose() {
+  if (!till.value) return
+  counts.value = Object.fromEntries(till.value.payments.map((p) => [p.mode, '']))
+  closeNote.value = ''
+  closeReport.value = null
+  closeStep.value = 'count'
+  error.value = ''
+  view.value = 'close'
+}
+const countsValid = computed(() => Object.values(counts.value).every((v) => v !== '' && Number(v) >= 0))
+const cleanCounts = () => Object.fromEntries(Object.entries(counts.value).map(([mode, v]) => [mode, Number(v) || 0]))
+async function reviewClose() {
+  if (!countsValid.value || busy.value) return
+  busy.value = true
+  error.value = ''
+  try {
+    closeReport.value = await tillApi.preview(shop.value, cleanCounts())
+    closeStep.value = 'review'
+  } catch (err) {
+    fail(err)
+  } finally {
+    busy.value = false
+  }
+}
+async function confirmClose() {
+  if (busy.value) return
+  busy.value = true
+  error.value = ''
+  try {
+    closeReport.value = await tillApi.close(shop.value, cleanCounts(), closeNote.value)
+    closeStep.value = 'done'
+  } catch (err) {
+    fail(err)
+  } finally {
+    busy.value = false
+  }
+}
+function finishClose() {
+  view.value = 'sell'
+  openTill()
+}
+const hasDifference = computed(() => closeReport.value?.rows.some((r) => Math.abs(r.difference ?? 0) >= 0.005) ?? false)
+
+// Printing: one printout at a time (a receipt or a session report)
+const printReport = ref<SessionReport | null>(null)
+async function printTillReport(report: SessionReport) {
+  printSale.value = null
+  printReport.value = report
+  await nextTick()
+  window.print()
+}
+
 function fail(err: unknown) {
   error.value = err instanceof ApiError ? err.message : String(err)
 }
@@ -65,12 +194,14 @@ function fail(err: unknown) {
 async function openTill() {
   if (!shop.value) return
   error.value = ''
+  notice.value = ''
   till.value = null
   cart.value = loadCart(shop.value)
   stepName.value = 'cart'
   try {
     till.value = await posApi.till(shop.value)
     mode.value = (till.value.payments.find((p) => p.default) ?? till.value.payments[0])?.mode ?? ''
+    openingCash.value = till.value.last_cash ?? ''
     await Promise.all([search(), loadRecent()])
   } catch (err) {
     fail(err)
@@ -209,6 +340,7 @@ function startNew(focus = true) {
 
 async function print(target: Sale | string) {
   try {
+    printReport.value = null
     printSale.value = typeof target === 'string' ? await posApi.sale(target) : target
     await nextTick()
     window.print()
@@ -218,6 +350,7 @@ async function print(target: Sale | string) {
 }
 
 function onKey(event: KeyboardEvent) {
+  if (!selling.value || view.value !== 'sell' || moveOpen.value || xReport.value) return
   if (event.key === 'F2') {
     event.preventDefault()
     focusScan()
@@ -243,21 +376,130 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         <h1 class="page-title">{{ t('pos.title') }}</h1>
         <p class="page-subtitle">{{ till?.shop_name ?? t('pos.subtitle') }}</p>
       </div>
-      <select
-        v-if="shops.length > 1"
-        v-model="shop"
-        class="field w-auto rounded-xl bg-white py-2.5 text-[15px]"
-        :aria-label="t('pos.shop')"
-        :disabled="stepName !== 'cart'"
-      >
-        <option v-for="s in shops" :key="s.name" :value="s.name">{{ s.shop_name }}</option>
-      </select>
+      <div class="flex flex-wrap items-center gap-2">
+        <template v-if="selling && view === 'sell'">
+          <button type="button" class="btn-secondary px-3.5 py-2 text-[14px]" @click="startMove('In')">{{ t('till.cashIn') }}</button>
+          <button type="button" class="btn-secondary px-3.5 py-2 text-[14px]" @click="startMove('Out')">{{ t('till.cashOut') }}</button>
+          <button type="button" class="btn-secondary px-3.5 py-2 text-[14px]" @click="showX">{{ t('till.xReport') }}</button>
+          <button type="button" class="btn-secondary px-3.5 py-2 text-[14px]" :disabled="stepName === 'pay'" @click="startClose">
+            {{ t('till.close') }}
+          </button>
+        </template>
+        <RouterLink v-if="till" to="/pos/sessions" class="btn-quiet px-3.5 py-2 text-[14px]">{{ t('till.history') }}</RouterLink>
+        <select
+          v-if="shops.length > 1"
+          v-model="shop"
+          class="field w-auto rounded-xl bg-white py-2.5 text-[15px]"
+          :aria-label="t('pos.shop')"
+          :disabled="stepName !== 'cart' || view !== 'sell'"
+        >
+          <option v-for="s in shops" :key="s.name" :value="s.name">{{ s.shop_name }}</option>
+        </select>
+      </div>
     </div>
 
     <p v-if="!shop" class="notice-warn mt-6">{{ t('shop.noShop') }}</p>
     <p v-if="error" class="notice-error mt-6" role="alert">{{ error }}</p>
+    <p v-if="info" class="notice-ok mt-6" role="status">{{ info }}</p>
 
-    <div v-if="shop && till" class="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+    <!-- Closing the till -->
+    <section v-if="shop && till && view === 'close'" class="card-pad mt-6 max-w-2xl">
+      <template v-if="closeStep === 'count'">
+        <h2 class="text-[20px] font-semibold text-slate-900">{{ t('till.countTitle') }}</h2>
+        <p class="hint mt-1">{{ t('till.countHint') }}</p>
+        <div class="mt-5 grid gap-4 sm:grid-cols-2">
+          <div v-for="p in till.payments" :key="p.mode">
+            <label class="label" :for="`count-${p.mode}`">{{ p.cash ? t('till.cashInDrawer') : t('till.methodTotal', { method: methodLabel(p.mode, t) }) }}</label>
+            <input
+              :id="`count-${p.mode}`"
+              v-model.number="counts[p.mode]"
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              class="field text-[20px] tabular-nums"
+              @keydown.enter.prevent="reviewClose"
+            />
+          </div>
+        </div>
+        <div class="mt-6 flex flex-wrap gap-2">
+          <button type="button" class="btn-secondary btn-lg" @click="view = 'sell'">{{ t('pos.back') }}</button>
+          <button type="button" class="btn-primary btn-lg" :disabled="!countsValid || busy" @click="reviewClose">{{ t('till.review') }}</button>
+        </div>
+      </template>
+
+      <template v-else-if="closeReport">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-[20px] font-semibold text-slate-900">
+            {{ closeStep === 'done' ? t('till.zReport') : t('till.reviewTitle') }}
+          </h2>
+          <span v-if="closeStep === 'done'" class="badge-neutral">{{ t('till.closedBadge') }}</span>
+        </div>
+        <p v-if="closeStep === 'review'" class="mt-3" :class="hasDifference ? 'notice-warn' : 'notice-ok'">
+          {{ hasDifference ? t('till.differenceWarn') : t('till.balanced') }}
+        </p>
+        <div class="mt-5">
+          <TillReport :report="closeReport" />
+        </div>
+        <template v-if="closeStep === 'review'">
+          <label class="label mt-5" for="close-note">{{ t('till.note') }}</label>
+          <textarea id="close-note" v-model="closeNote" rows="2" maxlength="1000" class="field text-[15px]" :placeholder="t('till.notePlaceholder')" />
+          <div class="mt-6 flex flex-wrap gap-2">
+            <button type="button" class="btn-secondary btn-lg" :disabled="busy" @click="closeStep = 'count'">{{ t('till.recount') }}</button>
+            <button type="button" class="btn-primary btn-lg" :disabled="busy" @click="confirmClose">
+              {{ busy ? t('pos.saving') : t('till.confirmClose') }}
+            </button>
+          </div>
+        </template>
+        <div v-else class="mt-6 flex flex-wrap gap-2">
+          <button type="button" class="btn-secondary btn-lg" @click="printTillReport(closeReport)">{{ t('till.printReport') }}</button>
+          <button type="button" class="btn-primary btn-lg" @click="finishClose">{{ t('till.done') }}</button>
+        </div>
+      </template>
+    </section>
+
+    <!-- No open session: open the till -->
+    <section v-else-if="shop && till && !tillSession" class="card-pad mt-6 max-w-md">
+      <h2 class="text-[20px] font-semibold text-slate-900">{{ t('till.openTitle') }}</h2>
+      <p class="hint mt-1">{{ t('till.openHint') }}</p>
+      <label class="label mt-5" for="opening-cash">{{ t('till.openingCash') }}</label>
+      <input
+        id="opening-cash"
+        v-model.number="openingCash"
+        type="number"
+        min="0"
+        step="0.01"
+        inputmode="decimal"
+        class="field text-[22px] tabular-nums"
+        :placeholder="money(0)"
+        @keydown.enter.prevent="openSession"
+      />
+      <p v-if="till.last_cash !== null" class="hint mt-2">{{ t('till.lastCash', { amount: money(till.last_cash) }) }}</p>
+      <button type="button" class="btn-primary btn-lg mt-6 w-full" :disabled="busy || Number(openingCash) < 0" @click="openSession">
+        {{ t('till.open') }}
+      </button>
+    </section>
+
+    <!-- Someone else's session, or the user's own from an earlier day -->
+    <section v-else-if="shop && till && tillSession && !selling" class="card-pad mt-6 max-w-md">
+      <template v-if="tillSession.mine">
+        <h2 class="text-[20px] font-semibold text-slate-900">{{ t('till.outdatedTitle') }}</h2>
+        <p class="mt-2 text-[15px] text-slate-600">{{ t('till.outdatedBody', { when: formatWhen(tillSession.opened, locale) }) }}</p>
+        <button type="button" class="btn-primary btn-lg mt-6 w-full" @click="startClose">{{ t('till.close') }}</button>
+      </template>
+      <template v-else>
+        <h2 class="text-[20px] font-semibold text-slate-900">{{ t('till.busyTitle') }}</h2>
+        <p class="mt-2 text-[15px] text-slate-600">
+          {{ t('till.busyBody', { name: tillSession.user_name, when: formatWhen(tillSession.opened, locale) }) }}
+        </p>
+        <button v-if="till.can_manage" type="button" class="btn-primary btn-lg mt-6 w-full" @click="startClose">
+          {{ t('till.closeTheirs', { name: tillSession.user_name }) }}
+        </button>
+        <p v-else class="hint mt-4">{{ t('till.askToClose') }}</p>
+      </template>
+    </section>
+
+    <div v-if="shop && till && selling && view === 'sell'" class="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
       <!-- Products -->
       <section class="min-w-0">
         <div class="card p-3">
@@ -439,7 +681,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
     <!-- Phone: the cart is below the products, so keep the total and Pay in reach -->
     <button
-      v-if="till && cart.length && stepName === 'cart'"
+      v-if="till && selling && view === 'sell' && cart.length && stepName === 'cart'"
       type="button"
       class="btn-primary btn-lg fixed inset-x-3 bottom-3 z-30 justify-between shadow-lg lg:hidden"
       @click="payFromBar"
@@ -448,6 +690,36 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       <span class="tabular-nums">{{ money(total) }}</span>
     </button>
 
+    <!-- Cash in / cash out -->
+    <AppDialog v-if="moveOpen" :title="moveType === 'In' ? t('till.cashIn') : t('till.cashOut')" @close="moveOpen = false">
+      <p class="hint">{{ moveType === 'In' ? t('till.cashInHint') : t('till.cashOutHint') }}</p>
+      <label class="label mt-4" for="move-amount">{{ t('till.amount') }}</label>
+      <input id="move-amount" v-model.number="moveAmount" autofocus type="number" min="0" step="0.01" inputmode="decimal" class="field text-[20px] tabular-nums" />
+      <label class="label mt-4" for="move-reason">{{ t('till.reason') }}</label>
+      <input
+        id="move-reason"
+        v-model="moveReason"
+        maxlength="140"
+        dir="auto"
+        class="field text-[15px]"
+        :placeholder="moveType === 'In' ? t('till.reasonInPlaceholder') : t('till.reasonOutPlaceholder')"
+        @keydown.enter.prevent="saveMove"
+      />
+      <div class="mt-6 grid grid-cols-[auto_1fr] gap-2">
+        <button type="button" class="btn-secondary btn-lg" @click="moveOpen = false">{{ t('categories.cancel') }}</button>
+        <button type="button" class="btn-primary btn-lg" :disabled="!moveValid || busy" @click="saveMove">{{ t('till.record') }}</button>
+      </div>
+    </AppDialog>
+
+    <!-- X report -->
+    <AppDialog v-if="xReport" wide :title="t('till.xReport')" @close="xReport = null">
+      <TillReport :report="xReport" />
+      <div class="mt-6 flex justify-end">
+        <button type="button" class="btn-secondary" @click="printTillReport(xReport)">{{ t('till.printReport') }}</button>
+      </div>
+    </AppDialog>
+
     <PosReceipt v-if="printSale" :sale="printSale" />
+    <TillReport v-if="printReport" :report="printReport" variant="print" />
   </div>
 </template>

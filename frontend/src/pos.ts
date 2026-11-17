@@ -1,5 +1,6 @@
 // Point of sale (retail_management.api.pos).
 import { api } from './api'
+import type { SessionInfo } from './till'
 
 const API = 'retail_management.api.pos'
 
@@ -8,6 +9,12 @@ export interface Till {
   shop_name: string
   currency: string
   payments: { mode: string; cash: boolean; default: number }[]
+  /** the till's open session, if any */
+  session: SessionInfo | null
+  /** owner or manager: may close someone else's session, sees expected amounts */
+  can_manage: boolean
+  /** cash counted at the last close, to suggest as the opening float */
+  last_cash: number | null
 }
 
 export interface PosProduct {
