@@ -20,7 +20,8 @@
     "signingIn": "Connexion…",
     "signOut": "Se déconnecter",
     "wrongCredentials": "E-mail, identifiant ou mot de passe incorrect.",
-    "serverError": "Impossible de joindre le serveur. Réessayez."
+    "serverError": "Impossible de joindre le serveur. Réessayez.",
+    "forgot": "Mot de passe oublié ?"
   },
   "roles": {
     "owner": "Propriétaire",
@@ -647,5 +648,46 @@
     "create": "Créer le compte",
     "created": "Compte de {name} créé.",
     "saved": "Compte de {name} enregistré."
+  },
+  "recover": {
+    "title": "Réinitialiser le mot de passe",
+    "subtitle": "Retrouvez l’accès à votre compte.",
+    "how": "Méthode",
+    "byEmail": "Lien par e-mail",
+    "byCode": "Code de secours",
+    "emailHint": "Nous enverrons un lien pour choisir un nouveau mot de passe à l’adresse e-mail de votre compte.",
+    "email": "Adresse e-mail",
+    "sendLink": "Envoyer le lien",
+    "sending": "Envoi…",
+    "emailSent": "Si cette adresse correspond à un compte, un lien pour choisir un nouveau mot de passe est en route. Vérifiez votre boîte de réception et les indésirables.",
+    "codeHint": "Propriétaires : utilisez un des codes de secours imprimés ou enregistrés. Personnel : demandez au propriétaire de définir un nouveau mot de passe depuis la page Équipe.",
+    "code": "Code de secours",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Nouveau mot de passe (confirmation)",
+    "mismatch": "Les deux mots de passe ne sont pas identiques.",
+    "setPassword": "Enregistrer le mot de passe",
+    "saving": "Enregistrement…",
+    "passwordSet": "Votre nouveau mot de passe est enregistré. Vous pouvez vous connecter.",
+    "codesLeft": "Plus aucun code de secours : créez-en de nouveaux dans Réglages après connexion. | Il reste 1 code de secours : créez-en de nouveaux bientôt dans Réglages. | Il reste {count} codes de secours.",
+    "tooMany": "Trop de tentatives. Attendez une heure puis réessayez.",
+    "backToSignIn": "Retour à la connexion"
+  },
+  "recovery": {
+    "title": "Codes de secours",
+    "hint": "Si vous oubliez votre mot de passe et que l’e-mail ne fonctionne pas, un de ces codes permet d’en choisir un nouveau depuis la page de connexion. Chaque code ne sert qu’une fois. Imprimez-les ou gardez-les en lieu sûr, loin de cet appareil.",
+    "left": "{count} sur {total} restants",
+    "none": "Aucun pour l’instant",
+    "created": "Créés le {date}.",
+    "generate": "Créer des codes de secours",
+    "regenerate": "Créer une nouvelle série",
+    "replaceWarning": "Une nouvelle série remplace l’ancienne : vos codes actuels ne fonctionneront plus.",
+    "replaceConfirm": "Oui, créer une nouvelle série",
+    "cancel": "Annuler",
+    "showOnce": "Enregistrez ces codes maintenant. Ils ne s’affichent qu’une seule fois.",
+    "copy": "Copier",
+    "copied": "Copié",
+    "download": "Télécharger",
+    "print": "Imprimer",
+    "printHint": "Chaque code s’utilise une fois sur la page de connexion (Mot de passe oublié ?). Conservez cette feuille en lieu sûr."
   }
 }

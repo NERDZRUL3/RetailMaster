@@ -23,6 +23,7 @@ export const router = createRouter({
   history: createWebHistory('/retail/'),
   routes: [
     { path: '/login', component: () => import('./pages/LoginPage.vue'), meta: { guest: true } },
+    { path: '/forgot', component: () => import('./pages/ForgotPasswordPage.vue'), meta: { guest: true } },
     { path: '/no-access', component: () => import('./pages/NoAccessPage.vue') },
     {
       path: '/',

@@ -84,6 +84,7 @@ async function submit() {
         <button type="submit" :disabled="busy" class="btn-primary btn-lg mt-6 w-full">
           {{ busy ? t('auth.signingIn') : t('auth.signIn') }}
         </button>
+        <RouterLink to="/forgot" class="link mt-4 block text-center text-[14px]">{{ t('auth.forgot') }}</RouterLink>
       </form>
     </div>
   </div>

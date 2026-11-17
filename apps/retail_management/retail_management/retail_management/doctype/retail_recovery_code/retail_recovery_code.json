@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-11-17 14:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "code_hash",
+  "used_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "code_hash",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Code Hash",
+   "length": 64,
+   "reqd": 1
+  },
+  {
+   "fieldname": "used_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Used On",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-11-17 14:00:00",
+ "modified_by": "Administrator",
+ "module": "Retail Management",
+ "name": "Retail Recovery Code",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

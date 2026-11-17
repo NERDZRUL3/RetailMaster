@@ -168,9 +168,18 @@ find "$HOME/backups" -mindepth 1 -maxdepth 1 -type d -mtime +14 -exec rm -rf {} 
 `bench setup production` also adds a database-only backup every 6 hours
 into `sites/<site>/private/backups`.
 
-These copies are on the same disk as the site. A second copy outside the
-container is still needed: Proxmox backups of the LXC (vzdump) and an
-encrypted offsite copy (M1).
+These copies are on the same disk as the site. The script then calls
+`~/bin/offsite-backup.sh` (from `deploy/offsite-backup.sh`), which uploads an
+encrypted copy of the newest backup, the server's secrets and the site's
+encryption key to cloud storage with rclone. Setup, what to keep off the
+server, and the full rebuild are in [recovery.md](recovery.md). Add this line
+at the end of `~/bin/nightly-backup.sh`:
+
+```sh
+"$HOME/bin/offsite-backup.sh" || true
+```
+
+Proxmox backups of the whole container (vzdump) are still worth adding.
 
 ### Restore test
 
@@ -184,6 +193,114 @@ bench --site restoretest.local restore <dir>/<stamp>-<site>-database.sql.gz \
 bench --site restoretest.local list-apps
 bench drop-site restoretest.local --force --no-backup --db-root-username root --db-root-password "$R"
 ```
+
+## 7. Public access: Cloudflare Tunnel, one subdomain per interface
+
+The site has two interfaces: the retail interface at `/retail` and
+ERPNext's desk at `/desk`. Each one gets its own subdomain:
+
+| Address                    | Serves              |
+|----------------------------|---------------------|
+| `retail.<domain>`          | `/retail` (the SPA) |
+| `desk.<domain>`            | `/desk` (ERPNext)   |
+
+Both subdomains reach the same Frappe site. Cloudflare redirects each
+subdomain's root to its interface and sends the other interface's paths
+to the other subdomain. The app needs no change: `/api`, `/assets` and
+`/socket.io` work on both hosts. Session cookies belong to one host, so
+signing in on one subdomain does not sign you in on the other.
+
+### 7.1 Tunnel (no open ports needed)
+
+In the Cloudflare dashboard: **Zero Trust → Networks → Tunnels → Create a
+tunnel → Cloudflared**, name it (for example `retail-lxc`), and copy the
+install command it shows. On the server:
+
+```bash
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" | sudo tee /etc/apt/sources.list.d/cloudflared.list
+sudo apt-get update && sudo apt-get install -y cloudflared
+sudo cloudflared service install <token-from-dashboard>
+```
+
+In the tunnel, under **Public Hostnames**, add two entries. Both point to
+the same local nginx:
+
+| Subdomain | Domain     | Service type | URL            |
+|-----------|------------|--------------|----------------|
+| `retail`  | `<domain>` | HTTP         | `localhost:80` |
+| `desk`    | `<domain>` | HTTP         | `localhost:80` |
+
+Leave **HTTP Host Header** empty. Frappe's socket.io rejects a request
+whose `Host` and `Origin` differ, so the real host name must reach
+nginx. Cloudflare creates the DNS records itself. The tunnel only makes
+outbound connections, so the firewall in step 4 stays as it is.
+
+### 7.2 Tell the site about both host names
+
+```bash
+cd ~/frappe-bench
+bench setup add-domain retail.<domain> --site <site>
+bench setup add-domain desk.<domain> --site <site>
+bench --site <site> set-config host_name https://desk.<domain>
+```
+
+`host_name` is used for links in emails, such as password resets, which
+open in the desk.
+
+Leave nginx as it is. With one site, its single server block already
+answers for any host name. Running `bench setup nginx` again would also
+put back an `access_log ... main;` line, which fails on Debian 13 (it has
+no `main` log format), so `nginx -t` would fail.
+
+If cloudflared already runs on another machine on the LAN, you don't need
+to install it here. Add the two public hostnames to that tunnel with
+`http://<this server's LAN IP>:80` as the URL. Port 80 is already open in
+the firewall.
+
+### 7.3 Redirect rules
+
+In the dashboard for `<domain>`: **Rules → Redirect Rules → Create rule**
+(Single Redirects). Create the four rules below in this order. Use
+*Custom filter expression* and, for the target, *Dynamic*. Set the status
+to 302 while you test, then change it to 301.
+
+1. **Retail root**
+   - Expression: `(http.host eq "retail.<domain>" and http.request.uri.path eq "/")`
+   - URL: `"https://retail.<domain>/retail"` (no trailing slash: Frappe answers
+     `/retail/` with a 301 to `http://…/retail`, which costs an extra hop)
+2. **Desk root**
+   - Expression: `(http.host eq "desk.<domain>" and http.request.uri.path eq "/")`
+   - URL: `"https://desk.<domain>/desk"`
+3. **Desk paths on the retail host go to desk**
+   - Expression: `(http.host eq "retail.<domain>" and (starts_with(http.request.uri.path, "/desk") or starts_with(http.request.uri.path, "/app")))`
+   - URL: `concat("https://desk.<domain>", http.request.uri.path)`, with *Preserve query string* on
+4. **Retail paths on the desk host go to retail**
+   - Expression: `(http.host eq "desk.<domain>" and starts_with(http.request.uri.path, "/retail"))`
+   - URL: `concat("https://retail.<domain>", http.request.uri.path)`, with *Preserve query string* on
+
+Also set **SSL/TLS → Edge Certificates → Always Use HTTPS** to on.
+
+Optional: to put a sign-in in front of the desk, add a Zero Trust **Access
+application** for `desk.<domain>`, such as a one-time PIN sent to the
+owner's email. Do not put one on `retail.<domain>`: cashiers sign in
+through the app itself.
+
+### 7.4 Check
+
+```bash
+curl -sI https://retail.<domain>/ | grep -i location      # -> /retail
+curl -sI https://desk.<domain>/ | grep -i location        # -> /desk
+curl -s https://retail.<domain>/api/method/ping           # {"message":"pong"}
+```
+
+Then, in a browser, open `retail.<domain>` and sign in as a cashier. Open
+`desk.<domain>` and sign in as the owner. Check that live updates still
+work: the browser's network tab should show a `/socket.io` connection
+with status 101.
+
+The updater (below) still checks the site on `http://127.0.0.1`, so the
+tunnel does not affect it.
 
 ## Automatic updates
 

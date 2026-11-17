@@ -20,7 +20,8 @@
     "signingIn": "Signing in…",
     "signOut": "Sign out",
     "wrongCredentials": "Wrong email, username or password.",
-    "serverError": "Could not reach the server. Try again."
+    "serverError": "Could not reach the server. Try again.",
+    "forgot": "Forgot your password?"
   },
   "roles": {
     "owner": "Owner",
@@ -647,5 +648,46 @@
     "create": "Create account",
     "created": "Account for {name} created.",
     "saved": "Account for {name} saved."
+  },
+  "recover": {
+    "title": "Reset your password",
+    "subtitle": "Get back into your account.",
+    "how": "How to reset",
+    "byEmail": "Email link",
+    "byCode": "Recovery code",
+    "emailHint": "We will send a link to set a new password to the email address of your account.",
+    "email": "Email address",
+    "sendLink": "Send the link",
+    "sending": "Sending…",
+    "emailSent": "If this address belongs to an account, a link to set a new password is on its way. Check your inbox and spam folder.",
+    "codeHint": "Owners: use one of the recovery codes you printed or saved. Staff: ask the owner to set a new password from the Team page.",
+    "code": "Recovery code",
+    "newPassword": "New password",
+    "confirmPassword": "New password again",
+    "mismatch": "The two passwords are not the same.",
+    "setPassword": "Set new password",
+    "saving": "Saving…",
+    "passwordSet": "Your new password is set. You can sign in with it now.",
+    "codesLeft": "No recovery codes left: make a new set in Settings after signing in. | 1 recovery code left: make a new set in Settings soon. | {count} recovery codes left.",
+    "tooMany": "Too many attempts. Wait an hour and try again.",
+    "backToSignIn": "Back to sign in"
+  },
+  "recovery": {
+    "title": "Recovery codes",
+    "hint": "If you forget your password and email does not work, one of these codes lets you set a new one from the sign-in page. Each code works once. Print them or save them somewhere safe, away from this device.",
+    "left": "{count} of {total} left",
+    "none": "None yet",
+    "created": "Made on {date}.",
+    "generate": "Make recovery codes",
+    "regenerate": "Make a new set",
+    "replaceWarning": "A new set replaces the old one: the codes you have now will stop working.",
+    "replaceConfirm": "Yes, make a new set",
+    "cancel": "Cancel",
+    "showOnce": "Save these codes now. They are shown only this once.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "download": "Download",
+    "print": "Print",
+    "printHint": "Each code can be used once on the sign-in page (Forgot your password?). Keep this page somewhere safe."
   }
 }
