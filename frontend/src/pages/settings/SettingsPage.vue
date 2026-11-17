@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { api, ApiError } from '@/api'
@@ -35,6 +35,16 @@ const form = reactive({
 const strongPreview = computed(() => readableShade(form.brand_color))
 const colorAdjusted = computed(() => strongPreview.value.toLowerCase() !== form.brand_color.toLowerCase())
 const enabledLanguages = computed(() => LOCALES.filter((code) => form.languages[code]))
+
+// The page glow previews the colour being picked. Leaving without saving
+// returns it to the saved brand colour (styles.css falls back to --brand).
+watch(
+  () => form.brand_color,
+  (color) => {
+    if (/^#[0-9a-f]{6}$/i.test(color)) document.documentElement.style.setProperty('--glow', color)
+  },
+)
+onBeforeUnmount(() => document.documentElement.style.removeProperty('--glow'))
 
 function load(payload: SettingsPayload) {
   form.app_name = payload.app_name

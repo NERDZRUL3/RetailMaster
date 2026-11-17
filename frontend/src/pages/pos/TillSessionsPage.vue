@@ -75,7 +75,7 @@ async function print() {
 
     <p v-if="error" class="notice-error mt-6" role="alert">{{ error }}</p>
 
-    <div class="mt-6 list" :aria-busy="loading">
+    <div class="stagger mt-6 list" :aria-busy="loading">
       <button
         v-for="row in rows"
         :key="row.name"

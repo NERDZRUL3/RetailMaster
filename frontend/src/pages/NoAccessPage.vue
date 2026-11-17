@@ -15,7 +15,7 @@ async function signOut() {
 
 <template>
   <div class="flex min-h-screen items-center justify-center px-5">
-    <div class="card-pad w-full max-w-sm text-center">
+    <div class="card-pad animate-pop w-full max-w-sm text-center">
       <h1 class="section-title text-[22px]">{{ t('noAccess.title') }}</h1>
       <p class="mt-2 text-[15px] text-slate-500">{{ t('noAccess.body') }}</p>
       <button type="button" class="btn-secondary mt-6" @click="signOut">

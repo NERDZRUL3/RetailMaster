@@ -248,7 +248,7 @@ onMounted(loadStock) // stock tab, and the currency for every tab
 
     <!-- Stock on hand -->
     <section v-if="tab === 'stock'" class="mt-6">
-      <div v-if="stock" class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div v-if="stock" class="stagger grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div class="card p-4">
           <div class="text-[13px] text-slate-500">{{ t('stock.value') }}</div>
           <div class="mt-1 text-[22px] font-semibold text-slate-900 tabular-nums">{{ money(stock.totals.value) }}</div>
@@ -257,11 +257,11 @@ onMounted(loadStock) // stock tab, and the currency for every tab
           <div class="text-[13px] text-slate-500">{{ t('stock.units') }}</div>
           <div class="mt-1 text-[22px] font-semibold text-slate-900 tabular-nums">{{ qty(stock.totals.units) }}</div>
         </div>
-        <button type="button" class="card p-4 text-start" @click="stockOnly = 'low'">
+        <button type="button" class="card lift p-4 text-start" @click="stockOnly = 'low'">
           <div class="text-[13px] text-slate-500">{{ t('stock.low') }}</div>
           <div class="mt-1 text-[22px] font-semibold text-amber-600 tabular-nums">{{ stock.totals.low }}</div>
         </button>
-        <button type="button" class="card p-4 text-start" @click="stockOnly = 'out'">
+        <button type="button" class="card lift p-4 text-start" @click="stockOnly = 'out'">
           <div class="text-[13px] text-slate-500">{{ t('stock.out') }}</div>
           <div class="mt-1 text-[22px] font-semibold text-red-600 tabular-nums">{{ stock.totals.out }}</div>
         </button>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // Two series per column: stacked (a soft body under a striped brand top) or,
 // in "pair" mode, side by side (soft first series, solid brand second).
-// Hovering a column shows a box with each value and, if given, the total.
+// Columns grow in from the axis. Hovering (or tapping) a column lights up its
+// slot, dims the others and shows a box with each value and, if given, the total.
 import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue'
 
 const props = withDefaults(
@@ -87,6 +88,9 @@ const every = computed(() => {
   return Math.max(1, Math.ceil((longest * 6.2 + 8) / slot.value))
 })
 
+// Replays the grow-in when the data itself changes (another shop chosen).
+const drawKey = computed(() => props.columns.map((c) => c.values.join(':')).join(','))
+
 const tip = computed(() => {
   const i = active.value
   if (i < 0 || !bars.value[i]) return null
@@ -96,21 +100,47 @@ const tip = computed(() => {
 </script>
 
 <template>
-  <div ref="box" class="relative w-full min-w-0" dir="ltr" @mouseleave="hovered = null">
-    <svg :width="width" :height="height" role="img" :aria-label="label" class="block">
+  <div ref="box" class="relative w-full min-w-0" dir="ltr" @pointerleave="hovered = null">
+    <svg :width="width" :height="height" role="img" :aria-label="label" class="block touch-pan-y">
       <defs>
         <pattern :id="`${id}-lines`" width="6" height="5" patternUnits="userSpaceOnUse">
           <rect width="6" height="3" fill="var(--color-brand-600)" />
         </pattern>
       </defs>
       <template v-if="axis">
+        <line
+          v-for="tick in ticks"
+          :key="`grid-${tick}`"
+          :x1="pad.left"
+          :x2="width - pad.right"
+          :y1="y(tick)"
+          :y2="y(tick)"
+          stroke="var(--hairline)"
+          :stroke-dasharray="tick === 0 ? undefined : '2 4'"
+        />
         <template v-for="tick in ticks" :key="tick">
           <text :x="pad.left - 10" :y="y(tick) + 4" text-anchor="end" class="fill-slate-500 text-[11px] tabular-nums">
             {{ formatAxis ? formatAxis(tick) : tick }}
           </text>
         </template>
       </template>
-      <g v-for="(bar, i) in bars" :key="i" :opacity="active < 0 || active === i ? 1 : 0.85">
+      <!-- Hover band behind the active column -->
+      <rect
+        v-if="tip"
+        :x="pad.left + tip.i * slot + 2"
+        :y="pad.top"
+        :width="Math.max(0, slot - 4)"
+        :height="plotH"
+        rx="8"
+        fill="var(--color-brand-tint)"
+        class="pointer-events-none transition-[x] duration-200 ease-out"
+      />
+      <g
+        v-for="(bar, i) in bars"
+        :key="`${drawKey}-${i}`"
+        class="transition-opacity duration-200"
+        :style="{ opacity: hovered === null ? (active < 0 || active === i ? 1 : 0.85) : active === i ? 1 : 0.45 }"
+      >
         <rect
           v-for="(r, k) in bar.rects"
           :key="k"
@@ -118,8 +148,10 @@ const tip = computed(() => {
           :y="r.y"
           :width="r.w"
           :height="r.h"
-          :rx="r.kind === 'striped' ? 0 : 2"
+          :rx="r.kind === 'striped' ? 0 : 3"
           :fill="r.kind === 'soft' ? 'var(--color-brand-200)' : r.kind === 'solid' ? 'var(--color-brand-600)' : `url(#${id}-lines)`"
+          class="chart-grow"
+          :style="{ animationDelay: `${Math.min(i * 28, 600) + k * 60}ms` }"
         />
         <text
           v-if="(columns.length - 1 - i) % every === 0"
@@ -138,8 +170,8 @@ const tip = computed(() => {
           :height="plotH"
           fill="transparent"
           class="cursor-pointer"
-          @mouseenter="hovered = i"
-          @click="hovered = i"
+          @pointerenter="hovered = i"
+          @pointerdown="hovered = i"
         />
       </g>
     </svg>
@@ -147,7 +179,7 @@ const tip = computed(() => {
     <!-- Value box -->
     <div
       v-if="tip"
-      class="pointer-events-none absolute top-0 z-10 w-44 -translate-x-1/2 rounded-xl bg-white p-3 text-[13px] shadow-lg ring-1 ring-[var(--hairline)]"
+      class="chart-tip pointer-events-none absolute top-0 z-10 w-44 -translate-x-1/2 rounded-xl p-3 text-[13px]"
       :style="{ left: `clamp(5.5rem, ${tip.leftPct}%, calc(100% - 5.5rem))` }"
     >
       <div class="mb-1.5 font-medium text-slate-900">{{ tip.column.title ?? tip.column.label }}</div>

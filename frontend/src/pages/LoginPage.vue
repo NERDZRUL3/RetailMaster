@@ -54,7 +54,7 @@ async function submit() {
         <p class="mt-2 text-[15px] text-slate-500">{{ t('auth.subtitle') }}</p>
       </div>
 
-      <form class="card-pad mt-8" @submit.prevent="submit">
+      <form class="card-pad animate-rise mt-8" @submit.prevent="submit">
         <label class="label" for="login-email">{{ t('auth.email') }}</label>
         <input
           id="login-email"

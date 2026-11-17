@@ -370,7 +370,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl pb-20 lg:pb-0">
+  <div class="solid-surfaces mx-auto max-w-7xl pb-20 lg:pb-0">
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 class="page-title">{{ t('pos.title') }}</h1>

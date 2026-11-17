@@ -284,7 +284,7 @@ const supplierRow = computed(() => suppliers.value.find((s) => s.name === order.
 
     <!-- A placed order -->
     <template v-else-if="order">
-      <section class="mt-6 grid gap-3 sm:grid-cols-4">
+      <section class="stagger mt-6 grid gap-3 sm:grid-cols-4">
         <div class="card p-4">
           <div class="text-[13px] text-slate-500">{{ t('po.ordered') }}</div>
           <div class="mt-1 font-medium text-slate-900">{{ day(order.date) }}</div>

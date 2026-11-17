@@ -124,7 +124,7 @@ onMounted(async () => {
 
     <p v-if="error" class="notice-error mt-4" role="alert">{{ error }}</p>
 
-    <div class="list mt-6" :aria-busy="loading">
+    <div class="list stagger mt-6" :aria-busy="loading">
       <p v-if="!loading && !products.length" class="px-6 py-14 text-center text-[15px] text-slate-500">
         {{ query ? t('products.noMatch') : t('products.empty') }}
       </p>

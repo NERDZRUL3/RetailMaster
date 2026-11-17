@@ -147,12 +147,14 @@ async function signOut() {
 <template>
   <div class="min-h-screen">
     <!-- Phone: dimmed background behind the open drawer -->
-    <div v-if="menuOpen" class="fixed inset-0 z-30 bg-black/40 lg:hidden" aria-hidden="true" @click="menuOpen = false" />
+    <Transition name="fade">
+      <div v-if="menuOpen" class="fixed inset-0 z-30 bg-black/40 backdrop-blur-[2px] lg:hidden" aria-hidden="true" @click="menuOpen = false" />
+    </Transition>
 
     <!-- Side menu: locked to the side on desktop, a drawer on phones -->
     <aside
       id="app-menu"
-      class="card fixed inset-y-3 start-3 z-40 flex w-[min(260px,calc(100vw-1.5rem))] flex-col p-4 transition duration-200 lg:inset-y-4 lg:start-4 lg:w-[260px] lg:translate-x-0 lg:opacity-100"
+      class="glass-card fixed inset-y-3 start-3 z-40 flex w-[min(260px,calc(100vw-1.5rem))] flex-col p-4 transition duration-300 ease-[var(--ease-out)] lg:inset-y-4 lg:start-4 lg:w-[260px] lg:translate-x-0 lg:opacity-100"
       :class="
         menuOpen
           ? 'translate-x-0 opacity-100'
@@ -161,15 +163,18 @@ async function signOut() {
       :aria-label="t('nav.main')"
     >
       <div class="flex items-center gap-3 px-1 pb-5">
-        <img
-          v-if="branding.logo"
-          :src="branding.logo"
-          alt=""
-          class="h-11 w-11 shrink-0 rounded-xl bg-white object-contain"
-        />
-        <span v-else class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600 text-[18px] font-bold text-on-brand">
-          {{ branding.app_name.slice(0, 1) }}
-        </span>
+        <!-- Logo: pops in, a brand ring turns slowly around it, it tilts on hover -->
+        <RouterLink :to="menu[0]?.to ?? '/'" class="logo-mark shrink-0" :aria-label="branding.app_name">
+          <img
+            v-if="branding.logo"
+            :src="branding.logo"
+            alt=""
+            class="logo-mark-face h-11 w-11 rounded-xl bg-white object-contain"
+          />
+          <span v-else class="logo-mark-face grid h-11 w-11 place-items-center rounded-xl bg-brand-600 bg-gradient-to-br from-white/20 to-transparent text-[18px] font-bold text-on-brand">
+            {{ branding.app_name.slice(0, 1) }}
+          </span>
+        </RouterLink>
         <span class="min-w-0 leading-tight">
           <span class="block truncate text-[17px] font-semibold text-slate-900"><bdi>{{ branding.app_name }}</bdi></span>
           <span class="block truncate text-[13px] text-slate-500">{{ t('nav.tagline') }}</span>
@@ -190,7 +195,21 @@ async function signOut() {
         <ul class="space-y-1">
           <li v-for="item in menu" :key="item.to">
             <RouterLink :to="item.to" class="nav-item" :aria-current="isActive(item.to) ? 'page' : undefined">
-              <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                class="nav-icon h-5 w-5 shrink-0"
+                :class="`nav-icon--${item.key}`"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <!-- Tinted copy that fills up from the bottom on the current page -->
+                <g class="nav-icon-fill" fill="currentColor" stroke="none">
+                  <path v-for="d in ICONS[item.key]" :key="d" :d="d" />
+                </g>
                 <path v-for="d in ICONS[item.key]" :key="d" :d="d" />
               </svg>
               <span class="flex-1">{{ t(`nav.items.${item.key}`) }}</span>
@@ -207,8 +226,8 @@ async function signOut() {
       </nav>
 
       <!-- Point of sale card -->
-      <div v-if="session.context?.can_sell && route.path !== '/pos'" class="mt-4 rounded-xl bg-slate-50 p-4">
-        <svg viewBox="0 0 24 24" class="h-6 w-6 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <div v-if="session.context?.can_sell && route.path !== '/pos'" class="mt-4 rounded-xl bg-brand-tint p-4 ring-1 ring-[color-mix(in_srgb,var(--brand)_25%,transparent)]">
+        <svg viewBox="0 0 24 24" class="pos-float h-6 w-6 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M4 4h16v10H4zM8 18h8M12 14v4M7 8h4" />
         </svg>
         <div class="mt-2 text-[16px] font-semibold text-slate-900">{{ t('nav.pos.title') }}</div>
@@ -320,9 +339,10 @@ async function signOut() {
                   <path d="m6 9 6 6 6-6" />
                 </svg>
               </button>
+              <Transition name="pop">
               <div
                 v-if="accountOpen"
-                class="card absolute end-0 top-full z-30 mt-2 w-72 p-4 shadow-xl"
+                class="card surface-solid absolute end-0 top-full z-30 mt-2 w-72 origin-top-right p-4 shadow-xl rtl:origin-top-left"
                 role="menu"
               >
                 <div class="leading-tight">
@@ -351,13 +371,21 @@ async function signOut() {
                   {{ t('auth.signOut') }}
                 </button>
               </div>
+              </Transition>
             </div>
           </div>
         </div>
       </header>
 
       <main class="px-3 pb-12 sm:px-5 lg:ps-0 lg:pe-4">
-        <RouterView />
+        <!-- Pages fade in; the till switches instantly so cashiers never wait. -->
+        <RouterView v-slot="{ Component, route: current }">
+          <Transition :name="current.path.startsWith('/pos') ? 'instant' : 'page'" mode="out-in">
+            <div :key="current.matched.at(-1)?.path ?? current.path">
+              <component :is="Component" />
+            </div>
+          </Transition>
+        </RouterView>
       </main>
     </div>
   </div>

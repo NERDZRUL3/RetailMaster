@@ -160,7 +160,7 @@ const TIER_BADGE: Record<string, string> = {
       </label>
     </div>
 
-    <ul class="list mt-4" :aria-busy="loading">
+    <ul class="list stagger mt-4" :aria-busy="loading">
       <li v-for="u in visible" :key="u.name" class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5" :class="u.enabled ? '' : 'opacity-60'">
         <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-[14px] font-semibold text-slate-700" aria-hidden="true">{{ initials(u) }}</span>
         <span class="min-w-0 flex-1">

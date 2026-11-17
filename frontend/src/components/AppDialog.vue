@@ -46,14 +46,14 @@ onBeforeUnmount(() => (before as HTMLElement | null)?.focus?.())
 
 <template>
   <Teleport to="body">
-    <div class="fixed inset-0 z-50 grid place-items-center bg-black/50 p-3 sm:p-6" @mousedown.self="emit('close')" @keydown="onKey">
+    <div class="dialog-backdrop fixed inset-0 z-50 grid place-items-center bg-black/45 p-3 backdrop-blur-sm sm:p-6" @mousedown.self="emit('close')" @keydown="onKey">
       <div
         ref="panel"
         role="dialog"
         aria-modal="true"
         :aria-label="props.title"
         tabindex="-1"
-        class="card flex max-h-[calc(100dvh-1.5rem)] w-full flex-col overflow-hidden outline-none sm:max-h-[calc(100dvh-3rem)]"
+        class="card dialog-panel flex max-h-[calc(100dvh-1.5rem)] w-full flex-col overflow-hidden outline-none sm:max-h-[calc(100dvh-3rem)]"
         :class="wide ? 'max-w-2xl' : 'max-w-md'"
       >
         <div class="flex items-center justify-between gap-3 px-5 pt-5">

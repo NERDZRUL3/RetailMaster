@@ -20,7 +20,7 @@ const shops = computed(() => session.context?.shops ?? [])
       <h2 class="label mt-8">
         {{ shops.length === 1 ? t('shop.yourShop') : t('shop.yourShops') }}
       </h2>
-      <div class="grid gap-4">
+      <div class="stagger grid gap-4">
         <ShopCard v-for="shop in shops" :key="shop.name" :shop="shop" />
       </div>
 

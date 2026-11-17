@@ -77,7 +77,7 @@ async function save() {
     />
     <p v-if="error" class="notice-error mt-4" role="alert">{{ error }}</p>
 
-    <ul class="list mt-4" :aria-busy="loading">
+    <ul class="list stagger mt-4" :aria-busy="loading">
       <li v-for="s in rows" :key="s.name" class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5">
         <span class="min-w-0 flex-1">
           <span class="block font-medium text-slate-900" :class="s.disabled ? 'line-through opacity-60' : ''" dir="auto">{{ s.supplier_name }}</span>
