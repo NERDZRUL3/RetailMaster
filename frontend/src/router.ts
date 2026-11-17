@@ -75,8 +75,7 @@ export const router = createRouter({
         },
         {
           path: 'inventory',
-          component: () => import('./pages/ComingSoonPage.vue'),
-          props: { section: 'inventory' },
+          component: () => import('./pages/inventory/InventoryPage.vue'),
           meta: { homes: ['owner', 'manager'] },
         },
         {
@@ -87,14 +86,23 @@ export const router = createRouter({
         },
         {
           path: 'suppliers',
-          component: () => import('./pages/ComingSoonPage.vue'),
-          props: { section: 'suppliers' },
+          component: () => import('./pages/purchasing/SuppliersPage.vue'),
           meta: { homes: ['owner', 'manager'] },
         },
         {
           path: 'purchase-orders',
-          component: () => import('./pages/ComingSoonPage.vue'),
-          props: { section: 'purchaseOrders' },
+          component: () => import('./pages/purchasing/PurchaseOrdersPage.vue'),
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'purchase-orders/new',
+          component: () => import('./pages/purchasing/PurchaseOrderPage.vue'),
+          meta: { homes: ['owner', 'manager'] },
+        },
+        {
+          path: 'purchase-orders/:name',
+          component: () => import('./pages/purchasing/PurchaseOrderPage.vue'),
+          props: true,
           meta: { homes: ['owner', 'manager'] },
         },
         {

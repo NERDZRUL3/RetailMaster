@@ -88,6 +88,42 @@ creates. It only adds rights, never removes them.
 | Customer, Account, Mode of Payment, POS Profile | Owner: read | read | read |
 | POS Opening Entry, POS Closing Entry | Owner: read, write, create, submit | read, write, create, submit (own shops via POS Profile) | same as manager |
 | Retail Cash Movement | Owner: read (created only through the API) | none (API) | none (API) |
+| Stock Reconciliation (stock counts) | Owner: read, write, create, submit · Partner: read | read, write, create, submit (own shops) | none |
+| Supplier | Owner: read, write, create · Partner: read | read, write, create | none |
+| Supplier Group, Contact | Owner: read | read | none |
+| Purchase Order | Owner: read, write, create, delete, submit, cancel · Partner: read | same as owner (own shops: the order's warehouse) | none |
+| Purchase Receipt | Owner: read, write, create, submit · Partner: read | read, write, create, submit (own shops) | none |
+
+Flags of all groups a role gets are merged (`setup._merge`), so one group
+granting read never takes away another group's write.
+
+Inventory (`retail_management.api.stock`):
+
+- Stock on hand per shop with its value at cost, low and out-of-stock
+  totals; the stock ledger (sales, returns, deliveries, purchase receipts,
+  transfers, counts) newest first.
+- A transfer is one submitted Stock Entry (Material Transfer) between two
+  shops of the same company. Owners transfer between any shops; a manager
+  only between shops they manage (User Permissions apply to both
+  warehouses). Transfers to or from a shop a manager does not manage are not
+  listed for them.
+- A count is a submitted Stock Reconciliation in one shop. Only products
+  whose counted quantity differs from the stock on record are adjusted;
+  if nothing differs, no document is created.
+
+Purchasing (`retail_management.api.purchasing`):
+
+- Suppliers with phone and email (kept in the supplier's primary Contact).
+- A purchase order is delivered to one shop's warehouse. Drafts can be
+  changed or deleted; a placed order can be cancelled while nothing was
+  received, or closed once partly received.
+- Receiving posts a submitted Purchase Receipt against the order for the
+  quantities delivered (never more than still expected) at the order's
+  unit cost; several deliveries per order are fine.
+- A `before_validate` hook on Purchase Receipt clears the "rejected
+  warehouse" that Frappe fills in from a restricted user's default
+  warehouse (ERPNext refuses accepted = rejected warehouse).
+- Supplier invoices and payments are not handled yet.
 | Stock Entry | Owner: read, write, create, submit · Partner: read | read, write, create, submit (own shops) | none |
 | Stock Entry Type | Owner: read | read | none |
 | Item Group (product groups and subgroups) | Owner: read, write, create, delete · Partner: read | read, write, create, delete | none |
@@ -176,6 +212,14 @@ purchasing, sales and POS documents). Tested in `test_inventory_api.py`.
   the manager, close with a shortfall, Z report, history and next float;
   one person per till; manager closes a cashier's session; cashier cannot
   close or read others' sessions; counts required.
+- `tests/test_stock_api.py` (4 tests): stock value and shop scope, cashier
+  refused; transfer between shops once per request, ledger entries;
+  manager and partner cannot transfer to another shop; counts adjust only
+  what differs.
+- `tests/test_purchasing_api.py` (4 tests): supplier contact; order placed
+  and received in two deliveries with stock in at the order's cost and
+  over-receipt refused; delete draft, cancel, close; manager limited to own
+  shop, partner read-only, cashier refused.
 - `tests/test_dashboard_api.py` (10 tests): overview figures net of returns,
   comparison with the previous period, daily and monthly series split by
   shop, latest sales, manager limited to own shop, cashier refused.

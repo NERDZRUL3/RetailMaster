@@ -26,6 +26,8 @@ export interface SessionContext {
   can_receive?: boolean
   /** Owners, managers and cashiers: may sell at the till. */
   can_sell?: boolean
+  /** Owners and managers: may manage suppliers and purchase orders. */
+  can_buy?: boolean
   csrf_token: string
 }
 

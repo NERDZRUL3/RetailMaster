@@ -56,4 +56,7 @@ has_permission = {
 # Warehouse and POS Profile. See services/shop_access.py.
 doc_events = {
 	"User": {"on_update": "retail_management.services.shop_access.on_user_update"},
+	"Purchase Receipt": {
+		"before_validate": "retail_management.api.purchasing.clear_default_rejected_warehouse"
+	},
 }

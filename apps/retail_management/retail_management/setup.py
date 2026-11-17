@@ -47,11 +47,40 @@ _SELLING = {
 	"POS Opening Entry": "rwcs",
 	"POS Closing Entry": "rwcs",
 }
+# Inventory (api/stock.py): stock counts are Stock Reconciliations; transfers
+# are Stock Entries (see _RECEIVING).
+_STOCK_OPS = {"Stock Reconciliation": "rwcs"}
+# Purchasing (api/purchasing.py): suppliers, orders delivered to a shop's
+# warehouse and receipts against them. x = cancel.
+_PURCHASING = {
+	"Supplier": "rwc",
+	"Supplier Group": "r",
+	"Contact": "r",
+	"Purchase Order": "rwcdsx",
+	"Purchase Receipt": "rwcs",
+	"Account": "r",
+}
+_PURCHASING_READ = {"Supplier": "r", "Purchase Order": "r", "Purchase Receipt": "r", "Stock Reconciliation": "r"}
+
+
+def _merge(*groups: dict) -> dict:
+	"""Union of permission flags per doctype (a later group never removes a right)."""
+	merged: dict[str, str] = {}
+	for group in groups:
+		for doctype, flags in group.items():
+			merged[doctype] = "".join(dict.fromkeys(merged.get(doctype, "") + flags))
+	return merged
+
+
 ERPNEXT_PERMISSIONS = {
-	ROLE_OWNER: {**_CATALOGUE_AND_STOCK, **_RECEIVING, **_CATEGORIES, **_SELLING, "Brand": "rwc"},
-	ROLE_PARTNER: {**_CATALOGUE_AND_STOCK, **_SALES_REPORTING, "Stock Entry": "r", "Brand": "rwc"},
-	ROLE_MANAGER: {**_CATALOGUE_AND_STOCK, **_RECEIVING, **_CATEGORIES, **_SELLING},
-	ROLE_CASHIER: {**_SELLING},
+	ROLE_OWNER: _merge(
+		_CATALOGUE_AND_STOCK, _RECEIVING, _CATEGORIES, _SELLING, _STOCK_OPS, _PURCHASING, {"Brand": "rwc"}
+	),
+	ROLE_PARTNER: _merge(
+		_CATALOGUE_AND_STOCK, _SALES_REPORTING, _PURCHASING_READ, {"Stock Entry": "r", "Brand": "rwc"}
+	),
+	ROLE_MANAGER: _merge(_CATALOGUE_AND_STOCK, _RECEIVING, _CATEGORIES, _SELLING, _STOCK_OPS, _PURCHASING),
+	ROLE_CASHIER: _merge(_SELLING),
 }
 _FLAG_TO_PTYPE = {
 	"r": ("read", "report"),
@@ -59,6 +88,7 @@ _FLAG_TO_PTYPE = {
 	"c": ("create",),
 	"d": ("delete",),
 	"s": ("submit",),
+	"x": ("cancel",),
 }
 
 

@@ -47,6 +47,7 @@ def get_context() -> dict:
 		"can_edit_settings": bool(frappe.has_permission("Retail Settings", "write")),
 		"can_receive": _can_receive(),
 		"can_sell": _can_sell(),
+		"can_buy": _can_buy(),
 		"csrf_token": frappe.sessions.get_csrf_token(),
 	}
 
@@ -59,6 +60,13 @@ def set_language(language: str) -> str:
 
 	frappe.db.set_value("User", frappe.session.user, "language", language)
 	return language
+
+
+def _can_buy() -> bool:
+	"""Owners and managers may manage suppliers and purchase orders."""
+	from retail_management.api.purchasing import can_buy
+
+	return can_buy()
 
 
 def _can_sell() -> bool:
