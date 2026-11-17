@@ -383,6 +383,39 @@ body::before {
   inset-inline-start: 0;
 }
 
+/* Scrollbars in the brand colour: a slim pill on a clear track, stronger
+   under the pointer. Chrome, Edge and Safari use the ::-webkit-scrollbar
+   rules (they ignore them once scrollbar-color is set, so that one is for
+   Firefox only, which cannot shape the thumb). */
+:root {
+  --scroll-thumb: color-mix(in srgb, var(--brand) 45%, transparent);
+  --scroll-thumb-hover: color-mix(in srgb, var(--brand) 75%, transparent);
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-color: var(--scroll-thumb);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  border-width: 2px;
+  background-color: var(--scroll-thumb-hover);
+}
+@supports (-moz-appearance: none) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
+}
+
 /* One visible focus style everywhere, for keyboard and scanner-driven use. */
 :focus-visible {
   outline: 2px solid var(--brand-strong);
